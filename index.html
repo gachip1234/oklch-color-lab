@@ -1,0 +1,4219 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OKLCH Color Lab & Overlay Studio</title>
+    <!-- Tailwind CSS for high-quality utility styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons for beautiful clean icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+      /* Checkerboard pattern for opacity transparency indicators */
+      .checkerboard-bg {
+        background-image:
+          linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+          linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+          linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+        background-size: 20px 20px;
+        background-position:
+          0 0,
+          0 10px,
+          10px -10px,
+          -10px 0px;
+      }
+      .dark .checkerboard-bg {
+        background-image:
+          linear-gradient(45deg, #1e293b 25%, transparent 25%),
+          linear-gradient(-45deg, #1e293b 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #1e293b 75%),
+          linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+      }
+
+      /* Custom scrollbar styling */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1e293b;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #475569;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+
+      /* Prevent selection during drag on the hue wheel */
+      .select-none {
+        user-select: none;
+        -webkit-user-select: none;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col antialiased selection:bg-indigo-500 selection:text-white"
+  >
+    <!-- Header Section -->
+    <header
+      class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30 px-6 py-4"
+    >
+      <div
+        class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="p-2.5 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30"
+          >
+            <i data-lucide="palette" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1
+              id="ui-title"
+              class="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-400 via-sky-400 to-emerald-400 bg-clip-text text-transparent"
+            >
+              OKLCH Color Lab
+            </h1>
+            <p id="ui-subtitle" class="text-xs text-slate-400 mt-0.5">
+              Trình chọn màu & thiết kế Overlay trực quan theo cảm nhận thị giác
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap justify-center">
+          <!-- Language Toggle Button -->
+          <div
+            class="flex bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs"
+          >
+            <button
+              id="btn-lang-vi"
+              class="px-2.5 py-1.5 rounded-md transition-all bg-slate-700 text-white font-semibold"
+            >
+              VI
+            </button>
+            <button
+              id="btn-lang-en"
+              class="px-2.5 py-1.5 rounded-md transition-all text-slate-400 hover:text-slate-200"
+            >
+              EN
+            </button>
+          </div>
+
+          <!-- Theme Toggle Button -->
+          <div
+            class="flex bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs"
+          >
+            <button
+              id="btn-theme-light"
+              class="px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all text-slate-400 hover:text-slate-200"
+            >
+              <i data-lucide="sun" class="w-3.5 h-3.5"></i>
+              <span id="lbl-theme-light">Sáng</span>
+            </button>
+            <button
+              id="btn-theme-dark"
+              class="px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all bg-slate-700 text-white shadow-sm font-semibold"
+            >
+              <i data-lucide="moon" class="w-3.5 h-3.5"></i>
+              <span id="lbl-theme-dark">Tối</span>
+            </button>
+          </div>
+          <a
+            href="#tutorial"
+            id="lbl-nav-tutorial"
+            class="text-xs text-slate-400 hover:text-indigo-400 transition flex items-center gap-1"
+          >
+            <i data-lucide="help-circle" class="w-4 h-4"></i> Hướng dẫn
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <main
+      class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6"
+    >
+      <!-- LEFT PANEL: Sliders & Controls (5 Cols) -->
+      <section
+        class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col gap-6"
+      >
+        <div
+          class="flex items-center justify-between border-b border-slate-800 pb-4"
+        >
+          <h2
+            id="lbl-panel-ctrl"
+            class="font-semibold text-base flex items-center gap-2 text-slate-200"
+          >
+            <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
+            Bộ điều khiển thông số
+          </h2>
+          <div class="flex items-center gap-2">
+            <!-- Eyedropper Button -->
+            <button
+              id="btn-eyedropper"
+              class="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1.5 rounded-lg border border-indigo-500/25 active:scale-95"
+              title="Kích hoạt bút hút màu từ màn hình"
+            >
+              <i data-lucide="pipette" class="w-3.5 h-3.5"></i>
+              <span id="lbl-btn-eyedropper">Hút màu</span>
+            </button>
+            <button
+              id="btn-reset"
+              class="text-xs text-slate-400 hover:text-rose-400 flex items-center gap-1 transition"
+            >
+              <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+              <span id="lbl-btn-reset">Đặt lại</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Lightness (L) Control -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center">
+            <label
+              id="lbl-ctrl-l"
+              for="input-l"
+              class="text-xs font-semibold text-slate-300 flex items-center gap-1.5"
+            >
+              <span
+                class="w-5 h-5 rounded bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-mono border border-slate-700"
+                >L</span
+              >
+              Độ sáng (Lightness)
+            </label>
+            <div class="flex items-center gap-1">
+              <input
+                type="number"
+                id="num-l"
+                min="0"
+                max="100"
+                step="0.5"
+                class="w-16 bg-slate-800 border border-slate-700 text-xs px-2 py-1 rounded text-center text-slate-200 focus:outline-none focus:border-indigo-500"
+              />
+              <span class="text-xs text-slate-500">%</span>
+            </div>
+          </div>
+          <div class="relative flex items-center">
+            <input
+              type="range"
+              id="input-l"
+              min="0"
+              max="100"
+              step="0.1"
+              class="w-full h-2.5 rounded-lg appearance-none cursor-pointer bg-slate-800 focus:outline-none"
+            />
+          </div>
+          <div
+            class="flex justify-between text-[10px] text-slate-500 font-mono"
+          >
+            <span id="lbl-track-l-min">0% (Đen)</span>
+            <span>50%</span>
+            <span id="lbl-track-l-max">100% (Trắng)</span>
+          </div>
+        </div>
+
+        <!-- Chroma (C) Control -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center">
+            <label
+              id="lbl-ctrl-c"
+              for="input-c"
+              class="text-xs font-semibold text-slate-300 flex items-center gap-1.5"
+            >
+              <span
+                class="w-5 h-5 rounded bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-mono border border-slate-700"
+                >C</span
+              >
+              Độ bão hòa (Chroma)
+            </label>
+            <div class="flex items-center gap-1">
+              <input
+                type="number"
+                id="num-c"
+                min="0"
+                max="0.4"
+                step="0.005"
+                class="w-16 bg-slate-800 border border-slate-700 text-xs px-2 py-1 rounded text-center text-slate-200 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+          <div class="relative flex items-center">
+            <input
+              type="range"
+              id="input-c"
+              min="0"
+              max="0.4"
+              step="0.001"
+              class="w-full h-2.5 rounded-lg appearance-none cursor-pointer bg-slate-800 focus:outline-none"
+            />
+          </div>
+          <div
+            class="flex justify-between text-[10px] text-slate-500 font-mono"
+          >
+            <span id="lbl-track-c-min">0.0 (Xám)</span>
+            <span id="lbl-track-c-mid">0.2 (Vừa phải)</span>
+            <span id="lbl-track-c-max">0.4 (Cực rực)</span>
+          </div>
+        </div>
+
+        <!-- Hue (H) Control with Color Wheel -->
+        <div class="space-y-3 border-t border-slate-800/60 pt-4">
+          <div class="flex justify-between items-center">
+            <label
+              id="lbl-ctrl-h"
+              class="text-xs font-semibold text-slate-300 flex items-center gap-1.5"
+            >
+              <span
+                class="w-5 h-5 rounded bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-mono border border-slate-700"
+                >H</span
+              >
+              Góc sắc độ (Hue)
+            </label>
+            <div class="flex items-center gap-1">
+              <input
+                type="number"
+                id="num-h"
+                min="0"
+                max="360"
+                step="1"
+                class="w-16 bg-slate-800 border border-slate-700 text-xs px-2 py-1 rounded text-center text-slate-200 focus:outline-none focus:border-indigo-500"
+              />
+              <span class="text-xs text-slate-500">°</span>
+            </div>
+          </div>
+
+          <!-- 360° Visual Circular Color Wheel (Bánh xe sắc độ trực quan) -->
+          <div class="flex justify-center py-2 select-none">
+            <div
+              id="hue-wheel-container"
+              class="relative w-40 h-40 rounded-full border border-slate-700/80 shadow-2xl flex items-center justify-center cursor-crosshair"
+            >
+              <!-- Conic Gradient dynamic background -->
+              <div
+                id="hue-wheel-gradient"
+                class="absolute inset-0 rounded-full"
+              ></div>
+              <!-- Inner cut-out masking to make it a ring -->
+              <div
+                class="absolute w-28 h-28 rounded-full bg-slate-900 flex flex-col items-center justify-center border border-slate-800 shadow-inner z-10"
+              >
+                <span
+                  id="lbl-wheel-tag"
+                  class="text-[9px] uppercase tracking-widest text-slate-500 font-bold"
+                  >Góc Chọn</span
+                >
+                <span
+                  id="wheel-center-text"
+                  class="text-xl font-black font-mono text-indigo-400"
+                  >145°</span
+                >
+              </div>
+              <!-- Absolute selector pointer handle -->
+              <div
+                id="hue-wheel-handle"
+                class="absolute w-5 h-5 rounded-full bg-white border-2 border-slate-950 shadow-lg pointer-events-none z-20 flex items-center justify-center"
+                style="transform: translate(0px, 0px)"
+              >
+                <div class="w-1.5 h-1.5 rounded-full bg-indigo-600"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Linear Range backup slider -->
+          <div class="relative flex items-center">
+            <input
+              type="range"
+              id="input-h"
+              min="0"
+              max="360"
+              step="0.5"
+              class="w-full h-2.5 rounded-lg appearance-none cursor-pointer bg-slate-800 focus:outline-none"
+            />
+          </div>
+          <div
+            class="flex justify-between text-[10px] text-slate-500 font-mono"
+          >
+            <span id="lbl-track-h-red" class="text-red-400">0° (Đỏ)</span>
+            <span id="lbl-track-h-yellow" class="text-yellow-400"
+              >90° (Vàng)</span
+            >
+            <span id="lbl-track-h-green" class="text-emerald-400"
+              >145° (Lá)</span
+            >
+            <span id="lbl-track-h-blue" class="text-sky-400">270° (Lam)</span>
+          </div>
+        </div>
+
+        <!-- Alpha (A) / Opacity Control -->
+        <div class="space-y-2 border-t border-slate-800 pt-4">
+          <div class="flex justify-between items-center">
+            <label
+              id="lbl-ctrl-a"
+              for="input-a"
+              class="text-xs font-semibold text-slate-300 flex items-center gap-1.5"
+            >
+              <span
+                class="w-5 h-5 rounded bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-mono border border-slate-700"
+                >A</span
+              >
+              Độ trong suốt (Alpha/Overlay)
+            </label>
+            <div class="flex items-center gap-1">
+              <input
+                type="number"
+                id="num-a"
+                min="0"
+                max="100"
+                step="1"
+                class="w-16 bg-slate-800 border border-slate-700 text-xs px-2 py-1 rounded text-center text-slate-200 focus:outline-none focus:border-indigo-500"
+              />
+              <span class="text-xs text-slate-500">%</span>
+            </div>
+          </div>
+          <div
+            class="relative flex items-center rounded-lg overflow-hidden p-1 bg-slate-950 border border-slate-800"
+          >
+            <!-- Overlay Grid underneath the slider track to show transparency visually -->
+            <div
+              class="absolute inset-1 rounded checkerboard-bg opacity-40 -z-0"
+            ></div>
+            <input
+              type="range"
+              id="input-a"
+              min="0"
+              max="100"
+              step="1"
+              class="w-full h-2.5 rounded-lg appearance-none cursor-pointer bg-transparent focus:outline-none z-10"
+            />
+          </div>
+          <div
+            class="flex justify-between text-[10px] text-slate-500 font-mono"
+          >
+            <span id="lbl-track-a-min">0% (Trong suốt)</span>
+            <span id="lbl-track-a-mid">50% (Bán trong)</span>
+            <span id="lbl-track-a-max">100% (Đậm đặc)</span>
+          </div>
+        </div>
+
+        <!-- Pre-defined Quick Colors -->
+        <div class="border-t border-slate-800 pt-4 space-y-3">
+          <h3 id="lbl-quick-title" class="text-xs font-semibold text-slate-400">
+            Bảng màu mẫu xuất phát
+          </h3>
+          <div class="grid grid-cols-5 gap-2" id="quick-colors-container">
+            <!-- Javascript will render quick start colors here -->
+          </div>
+        </div>
+
+        <!-- Quick Action: Import Hex Color -->
+        <div class="border-t border-slate-800 pt-4 space-y-2">
+          <h3
+            id="lbl-import-title"
+            class="text-xs font-semibold text-slate-400 flex items-center gap-1.5"
+          >
+            <i data-lucide="clipboard" class="w-3.5 h-3.5 text-indigo-400"></i>
+            Nhập nhanh mã màu HEX bên ngoài
+          </h3>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              id="input-import-hex"
+              placeholder="Ví dụ: #ff0055 hoặc ff0055"
+              class="flex-1 bg-slate-950 border border-slate-850 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-indigo-500 placeholder-slate-700"
+            />
+            <button
+              id="btn-import-hex"
+              class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-medium transition active:scale-95"
+            >
+              Nạp
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Action: Save to Palette -->
+        <button
+          id="btn-save-palette"
+          class="w-full mt-auto py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-xl border border-slate-700 text-xs flex items-center justify-center gap-2 transition active:scale-[0.98]"
+        >
+          <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-400"></i>
+          <span id="lbl-btn-save-palette">Lưu vào bảng tạm cá nhân</span>
+        </button>
+      </section>
+
+      <!-- RIGHT PANEL: Live Previews, Overlay Sandbox & Tools (7 Cols) -->
+      <section class="lg:col-span-7 flex flex-col gap-6">
+        <!-- MAIN OUTPUT CARD -->
+        <div
+          class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row gap-6 items-stretch"
+        >
+          <!-- Color Swatch Circle -->
+          <div
+            class="flex-shrink-0 flex items-center justify-center bg-slate-950 rounded-xl p-4 border border-slate-800 w-full md:w-44 h-44 relative overflow-hidden"
+          >
+            <div class="absolute inset-0 checkerboard-bg"></div>
+            <div
+              id="color-preview-circle"
+              class="absolute inset-0 transition-shadow duration-100 shadow-lg shadow-black/40"
+            ></div>
+            <span
+              id="gamut-warning"
+              class="hidden absolute top-2 right-2 bg-amber-500/90 text-slate-950 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider items-center gap-0.5 shadow-sm"
+              title="Màu này vượt quá không gian màu sRGB tiêu chuẩn, cần màn hình dải màu rộng (P3) để xem chính xác"
+            >
+              <i data-lucide="alert-triangle" class="w-3 h-3"></i> P3 WIDE
+            </span>
+          </div>
+
+          <!-- Code Outputs -->
+          <div class="flex-1 flex flex-col justify-between gap-4">
+            <div>
+              <h3
+                id="lbl-output-title"
+                class="text-xs font-bold uppercase tracking-wider text-slate-400"
+              >
+                Mã màu CSS kết xuất
+              </h3>
+              <div class="mt-2 space-y-2">
+                <!-- OKLCH Output -->
+                <div class="flex items-center gap-2">
+                  <span
+                    class="text-xs font-mono bg-slate-950 text-indigo-400 px-2 py-1.5 rounded-lg border border-slate-800 flex-1 overflow-x-auto whitespace-nowrap text-left"
+                    id="code-oklch"
+                  >
+                    oklch(...)
+                  </span>
+                  <button
+                    onclick="copyColorCode('code-oklch')"
+                    class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition active:scale-90"
+                    title="Sao chép"
+                  >
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                  </button>
+                </div>
+                <!-- Legacy Blended Fallback (HEX) -->
+                <div class="flex items-center gap-2">
+                  <div
+                    class="bg-slate-950 text-slate-300 px-2 py-1.5 rounded-lg border border-slate-800 flex-1 text-xs font-mono flex items-center justify-between"
+                  >
+                    <span id="code-hex">HEX: #ffffff</span>
+                    <span
+                      id="lbl-opaque-tag"
+                      class="text-[9px] text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800"
+                      >Không mờ (100% Opaque)</span
+                    >
+                  </div>
+                  <button
+                    onclick="copyColorCode('code-hex-val')"
+                    class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition active:scale-90"
+                    title="Sao chép"
+                  >
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                  </button>
+                  <span id="code-hex-val" class="hidden"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-400">
+              <div
+                class="p-2 bg-slate-950 rounded-lg border border-slate-800/60"
+              >
+                <span id="lbl-status-hue" class="text-slate-500 block mb-0.5"
+                  >Trạng thái Hue:</span
+                >
+                <span id="hue-description">Đang phân tích...</span>
+              </div>
+              <div
+                class="p-2 bg-slate-950 rounded-lg border border-slate-800/60"
+              >
+                <span id="lbl-status-chroma" class="text-slate-500 block mb-0.5"
+                  >Độ đậm thực tế:</span
+                >
+                <span id="chroma-description">Đang phân tích...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- INTERACTIVE OVERLAY SANDBOX -->
+        <div
+          class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4"
+        >
+          <div
+            class="flex items-center justify-between border-b border-slate-800 pb-3"
+          >
+            <h3
+              id="lbl-sandbox-title"
+              class="font-semibold text-base flex items-center gap-2 text-slate-200"
+            >
+              <i data-lucide="layers" class="w-4 h-4 text-sky-400"></i>
+              Giả lập Overlay thực tế (Độ trong suốt)
+            </h3>
+
+            <!-- Background Swapper for Testing -->
+            <div
+              class="flex bg-slate-950 p-1 rounded-lg border border-slate-800 text-[11px]"
+            >
+              <button
+                id="bg-opt-photo"
+                class="px-2 py-1 rounded transition bg-slate-800 text-white font-medium"
+              >
+                Phong cảnh
+              </button>
+              <button
+                id="bg-opt-grid"
+                class="px-2 py-1 rounded transition text-slate-400 hover:text-slate-200"
+              >
+                Lưới ô
+              </button>
+              <button
+                id="bg-opt-text"
+                class="px-2 py-1 rounded transition text-slate-400 hover:text-slate-200"
+              >
+                Văn bản
+              </button>
+            </div>
+          </div>
+
+          <!-- Simulation viewport -->
+          <div
+            class="relative w-full h-64 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center"
+            id="overlay-viewport"
+          >
+            <!-- Scenario 1: Scenic Photographic Background -->
+            <div
+              id="layer-photo"
+              class="absolute inset-0 bg-cover bg-center transition-opacity duration-300"
+              style="
+                background-image: url(&quot;https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop&quot;);
+              "
+            >
+              <div
+                class="absolute inset-0 bg-gradient-to-tr from-violet-600 via-sky-600 to-amber-500 opacity-20"
+              ></div>
+            </div>
+
+            <!-- Scenario 2: Checkerboard Transparency Grid -->
+            <div
+              id="layer-grid"
+              class="absolute inset-0 checkerboard-bg opacity-0 transition-opacity duration-300"
+            ></div>
+
+            <!-- Scenario 3: Heavy contrast text and layout elements -->
+            <div
+              id="layer-text"
+              class="absolute inset-0 bg-slate-950 p-6 flex flex-col justify-between opacity-0 transition-opacity duration-300 font-mono text-[10px] text-slate-500 select-none"
+            >
+              <div>// CODE SANDBOX ENVIRONMENT</div>
+              <div class="text-xs text-slate-300 space-y-1 font-sans">
+                <p class="font-bold text-slate-200">
+                  Hàm kiểm định độ trong suốt:
+                </p>
+                <p>
+                  const blend = (color, bg) => { return color.alpha * color + (1
+                  - color.alpha) * bg; }
+                </p>
+                <p>
+                  console.log("OKLCH rendering with hardware acceleration
+                  activated.");
+                </p>
+              </div>
+              <div>SYSTEM STABLE // NO ERRORS DETECTED</div>
+            </div>
+
+            <!-- The Dynamic Glassmorphic Overlay Card in the center -->
+            <div
+              class="z-10 w-4/5 max-w-sm p-5 rounded-2xl border transition-all duration-100 flex flex-col gap-3 shadow-2xl backdrop-blur-md"
+              id="overlay-glass-card"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md"
+                  id="glass-avatar"
+                >
+                  UI
+                </div>
+                <div>
+                  <h4
+                    id="lbl-glass-card-title"
+                    class="text-xs font-bold text-slate-900 dark:text-white"
+                  >
+                    Thử nghiệm kính mờ
+                  </h4>
+                  <p class="text-[10px] text-slate-700 dark:text-slate-300">
+                    oklch overlay preview card
+                  </p>
+                </div>
+              </div>
+              <p
+                id="lbl-glass-card-desc"
+                class="text-[11px] text-slate-800 dark:text-slate-200 leading-relaxed font-normal"
+              >
+                Thanh trượt Alpha hiện tại quyết định độ trong mờ của lớp phủ
+                này. Hãy thay đổi L, C, H để xem dải màu phối trộn có bị cháy
+                hoặc xám không.
+              </p>
+              <div class="flex gap-2 mt-1">
+                <button
+                  id="lbl-glass-card-btn1"
+                  class="flex-1 py-1 px-3 bg-slate-900 hover:bg-slate-950 text-white rounded-lg text-[10px] font-semibold transition active:scale-95 shadow"
+                >
+                  Xác nhận
+                </button>
+                <button
+                  id="lbl-glass-card-btn2"
+                  class="flex-1 py-1 px-3 bg-white/20 hover:bg-white/30 text-slate-900 dark:text-white border border-white/20 rounded-lg text-[10px] font-semibold transition active:scale-95"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALPHA BLENDING & CONTRAST EVALUATOR -->
+        <div
+          class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4"
+        >
+          <h3
+            id="lbl-contrast-heading"
+            class="font-semibold text-base flex items-center gap-2 text-slate-200 border-b border-slate-800 pb-3"
+          >
+            <i data-lucide="check-square" class="w-4 h-4 text-emerald-400"></i>
+            Độ tương phản & Kết quả trộn màu (Blending)
+          </h3>
+
+          <p
+            id="lbl-contrast-sub"
+            class="text-xs text-slate-400 leading-relaxed"
+          >
+            Khi thiết kế giao diện có overlay trong suốt, trình duyệt sẽ tự pha
+            trộn với nền thật bên dưới. Đây là mô phỏng chính xác màu sau khi bị
+            pha trộn:
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Light Mode Blending -->
+            <div
+              class="bg-white text-slate-900 rounded-xl p-4 border border-slate-200 flex flex-col justify-between gap-4"
+            >
+              <div class="flex justify-between items-center">
+                <span
+                  id="lbl-blend-light-title"
+                  class="text-xs font-bold text-slate-500 uppercase tracking-wide"
+                  >Trộn trên nền Sáng (#FFF)</span
+                >
+                <span
+                  class="w-3 h-3 rounded-full bg-white border border-slate-300 shadow-sm"
+                ></span>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-12 h-12 rounded-lg border border-slate-300 shadow-inner flex-shrink-0"
+                  id="blend-light-swatch"
+                ></div>
+                <div>
+                  <span
+                    id="lbl-blend-light-code"
+                    class="text-xs text-slate-500 font-mono block"
+                    >Mã màu hòa trộn cuối:</span
+                  >
+                  <span
+                    class="text-sm font-bold font-mono text-slate-800"
+                    id="blend-light-hex"
+                    >#ffffff</span
+                  >
+                </div>
+              </div>
+
+              <!-- Contrast Evaluation -->
+              <div
+                class="border-t border-slate-100 pt-3 flex items-center justify-between"
+              >
+                <span
+                  id="lbl-contrast-light-black"
+                  class="text-xs text-slate-500"
+                  >Contrast chữ Đen:</span
+                >
+                <span
+                  id="contrast-light-black"
+                  class="text-xs font-bold px-2 py-0.5 rounded"
+                  >1.0 : 1</span
+                >
+              </div>
+            </div>
+
+            <!-- Dark Mode Blending -->
+            <div
+              class="bg-slate-950 text-slate-100 rounded-xl p-4 border border-slate-850 flex flex-col justify-between gap-4"
+            >
+              <div class="flex justify-between items-center">
+                <span
+                  id="lbl-blend-dark-title"
+                  class="text-xs font-bold text-slate-500 uppercase tracking-wide"
+                  >Trộn trên nền Tối (#0F172A)</span
+                >
+                <span
+                  class="w-3 h-3 rounded-full bg-[#0f172a] border border-slate-700 shadow-sm"
+                ></span>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-12 h-12 rounded-lg border border-slate-700 shadow-inner flex-shrink-0"
+                  id="blend-dark-swatch"
+                ></div>
+                <div>
+                  <span
+                    id="lbl-blend-dark-code"
+                    class="text-xs text-slate-500 font-mono block"
+                    >Mã màu hòa trộn cuối:</span
+                  >
+                  <span
+                    class="text-sm font-bold font-mono text-slate-100"
+                    id="blend-dark-hex"
+                    >#0f172a</span
+                  >
+                </div>
+              </div>
+
+              <!-- Contrast Evaluation -->
+              <div
+                class="border-t border-slate-800 pt-3 flex items-center justify-between"
+              >
+                <span
+                  id="lbl-contrast-dark-white"
+                  class="text-xs text-slate-500"
+                  >Contrast chữ Trắng:</span
+                >
+                <span
+                  id="contrast-dark-white"
+                  class="text-xs font-bold px-2 py-0.5 rounded"
+                  >1.0 : 1</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Accessible Contrast Swatches Grid -->
+          <div class="border-t border-slate-800 pt-4 space-y-3">
+            <span
+              id="lbl-contrast-swatches"
+              class="text-xs font-bold text-slate-400 uppercase tracking-wide block"
+              >Bảng màu tương phản tối ưu (Accessible Text Combinations)</span
+            >
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <!-- On Primary -->
+              <div
+                class="rounded-xl p-3 border flex flex-col justify-between h-24 transition-all"
+                id="contrast-box-primary"
+              >
+                <span
+                  id="lbl-swatch-on-primary"
+                  class="font-bold text-[10px] block opacity-85"
+                  >Text on Primary</span
+                >
+                <span class="text-base font-black block my-1">Aa</span>
+                <span
+                  class="text-[9px] font-mono block"
+                  id="contrast-ratio-primary"
+                  >-- : 1</span
+                >
+              </div>
+              <!-- On Secondary -->
+              <div
+                class="rounded-xl p-3 border flex flex-col justify-between h-24 transition-all"
+                id="contrast-box-secondary"
+              >
+                <span
+                  id="lbl-swatch-on-secondary"
+                  class="font-bold text-[10px] block opacity-85"
+                  >Text on Secondary</span
+                >
+                <span class="text-base font-black block my-1">Aa</span>
+                <span
+                  class="text-[9px] font-mono block"
+                  id="contrast-ratio-secondary"
+                  >-- : 1</span
+                >
+              </div>
+              <!-- On Primary Bg (Light) -->
+              <div
+                class="rounded-xl p-3 border flex flex-col justify-between h-24 transition-all"
+                id="contrast-box-primary-bg-light"
+              >
+                <span
+                  id="lbl-swatch-bg-light"
+                  class="font-bold text-[10px] block opacity-85"
+                  >On Primary-Bg (Light)</span
+                >
+                <span class="text-base font-black block my-1">Aa</span>
+                <span
+                  class="text-[9px] font-mono block"
+                  id="contrast-ratio-primary-bg-light"
+                  >-- : 1</span
+                >
+              </div>
+              <!-- On Primary Bg (Dark) -->
+              <div
+                class="rounded-xl p-3 border flex flex-col justify-between h-24 transition-all"
+                id="contrast-box-primary-bg-dark"
+              >
+                <span
+                  id="lbl-swatch-bg-dark"
+                  class="font-bold text-[10px] block opacity-85"
+                  >On Primary-Bg (Dark)</span
+                >
+                <span class="text-base font-black block my-1">Aa</span>
+                <span
+                  class="text-[9px] font-mono block"
+                  id="contrast-ratio-primary-bg-dark"
+                  >-- : 1</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SAVED PALETTE SHELF -->
+        <div
+          class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4"
+        >
+          <div
+            class="flex items-center justify-between border-b border-slate-800 pb-3"
+          >
+            <h3
+              class="font-semibold text-base flex items-center gap-2 text-slate-200"
+            >
+              <i data-lucide="folder-heart" class="w-4 h-4 text-pink-400"></i>
+              <span id="lbl-saved-palette-shelf">Màu đã lưu của bạn</span>
+            </h3>
+            <button
+              id="btn-clear-palette"
+              class="text-[10px] text-slate-500 hover:text-rose-400 transition"
+            >
+              Xóa tất cả
+            </button>
+          </div>
+          <div id="palette-swatches" class="flex flex-wrap gap-3">
+            <p
+              class="text-xs text-slate-500 py-3 italic"
+              id="palette-empty-text"
+            >
+              Chưa có màu nào được lưu trong phiên này. Hãy click "Lưu vào bảng
+              tạm cá nhân".
+            </p>
+          </div>
+        </div>
+
+        <!-- CSS VARIABLES THEME GENERATOR -->
+        <div
+          class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5"
+        >
+          <div
+            class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-3 gap-3"
+          >
+            <h3
+              id="lbl-export-heading"
+              class="font-semibold text-base flex items-center gap-2 text-slate-200"
+            >
+              <i data-lucide="code" class="w-4 h-4 text-emerald-400"></i>
+              Xuất CSS Variables
+            </h3>
+
+            <!-- Export Source Tabs -->
+            <div
+              class="flex bg-slate-950 p-1 rounded-lg border border-slate-800 text-[11px]"
+              id="gen-source-tabs"
+            >
+              <button
+                id="tab-gen-shades"
+                class="px-2.5 py-1 rounded transition bg-slate-800 text-white font-medium"
+              >
+                11 Sắc Độ Base
+              </button>
+              <button
+                id="tab-gen-full"
+                class="px-2.5 py-1 rounded transition text-slate-400 hover:text-slate-200"
+              >
+                Bảng Màu UI Đầy Đủ
+              </button>
+              <button
+                id="tab-gen-saved"
+                class="px-2.5 py-1 rounded transition text-slate-400 hover:text-slate-200"
+              >
+                Bảng Đã Lưu
+              </button>
+            </div>
+          </div>
+
+          <!-- Customization Options -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div class="space-y-1.5">
+              <label
+                id="lbl-prefix-tag"
+                class="font-semibold text-slate-400 flex items-center gap-1"
+              >
+                Tiền tố biến (Prefix)
+              </label>
+              <input
+                type="text"
+                id="gen-prefix-input"
+                value="primary"
+                placeholder="primary, brand, secondary..."
+                class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 font-mono focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div class="space-y-1.5">
+              <label id="lbl-format-tag" class="font-semibold text-slate-400"
+                >Định dạng màu</label
+              >
+              <div
+                class="grid grid-cols-2 bg-slate-950 p-1 rounded-lg border border-slate-800"
+              >
+                <button
+                  id="btn-fmt-oklch"
+                  class="py-1 rounded text-center transition font-semibold bg-slate-800 text-indigo-400"
+                >
+                  OKLCH
+                </button>
+                <button
+                  id="btn-fmt-hex"
+                  class="py-1 rounded text-center transition text-slate-400 hover:text-slate-200"
+                >
+                  HEX
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Generated Swatches Preview Indicator -->
+          <div class="space-y-2">
+            <h4
+              class="text-xs font-semibold text-slate-400"
+              id="swatch-preview-title"
+            >
+              Xem trước dải màu phát sinh:
+            </h4>
+            <div
+              class="flex h-10 w-full rounded-xl overflow-hidden border border-slate-800"
+              id="generated-swatches-strip"
+            >
+              <!-- JavaScript will dynamically render swatches here -->
+            </div>
+          </div>
+
+          <!-- Code Block Area -->
+          <div class="space-y-2 relative">
+            <div class="flex items-center justify-between">
+              <span
+                id="lbl-css-block-title"
+                class="text-xs font-bold text-slate-500 uppercase tracking-wide"
+                >Mã CSS Variables tương ứng</span
+              >
+              <div class="flex gap-2">
+                <button
+                  id="btn-download-css"
+                  class="py-1 px-2.5 bg-slate-800 hover:bg-emerald-600 text-white text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm active:scale-95"
+                >
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                  <span id="lbl-btn-download">Tải File CSS</span>
+                </button>
+                <button
+                  onclick="copyColorCode('generated-css-code')"
+                  class="py-1 px-2.5 bg-slate-800 hover:bg-indigo-600 text-white text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm active:scale-95"
+                >
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  <span id="lbl-btn-copy-all">Copy Toàn Bộ</span>
+                </button>
+              </div>
+            </div>
+
+            <div
+              class="relative bg-slate-950 border border-slate-850 rounded-xl p-4 max-h-64 overflow-y-auto"
+            >
+              <pre
+                class="text-indigo-400 text-[11px] font-mono leading-relaxed select-text whitespace-pre"
+                id="generated-css-code"
+              >
+/* CSS variables loading... */
+                        </pre
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FULL-WIDTH SECTION: UI SIMULATOR (Bộ giả lập giao diện Sáng & Tối trực quan) -->
+      <section
+        class="lg:col-span-12 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6"
+      >
+        <div
+          class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 gap-2"
+        >
+          <div>
+            <h2
+              id="lbl-sim-title"
+              class="font-semibold text-base flex items-center gap-2 text-slate-200"
+            >
+              <i data-lucide="monitor-play" class="w-5 h-5 text-indigo-400"></i>
+              Giả lập Giao diện Dashboard Thực tế (UI Simulator)
+            </h2>
+            <p id="lbl-sim-desc" class="text-xs text-slate-400 mt-1">
+              Quan sát cách dải màu OKLCH thích ứng đồng đều theo cảm quan sinh
+              học trên cả hai chế độ Sáng và Tối
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span
+              id="lbl-sync-badge"
+              class="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20 font-semibold text-[10px] uppercase tracking-wider"
+            >
+              Đồng bộ thời gian thực
+            </span>
+          </div>
+        </div>
+
+        <!-- Wrapper hosting dynamic CSS custom properties -->
+        <div
+          id="ui-simulator-wrapper"
+          class="grid grid-cols-1 md:grid-cols-2 gap-6 select-none"
+        >
+          <!-- LIGHT MODE PREVIEW CARD -->
+          <div
+            class="rounded-xl border overflow-hidden flex flex-col h-[350px] shadow-lg transition-transform duration-200"
+            style="
+              background-color: var(--color-bg-light);
+              border-color: var(--color-border-light);
+              color: var(--color-text-light);
+            "
+          >
+            <!-- Mock Header -->
+            <div
+              class="px-4 py-3 border-b flex justify-between items-center"
+              style="
+                background-color: var(--color-surface-light);
+                border-color: var(--color-border-light);
+              "
+            >
+              <div class="flex items-center gap-2">
+                <div
+                  class="w-6 h-6 rounded-lg flex items-center justify-center text-white"
+                  style="background-color: var(--color-primary)"
+                >
+                  <i
+                    data-lucide="rocket"
+                    class="w-3.5 h-3.5"
+                    style="filter: brightness(0) invert(1)"
+                  ></i>
+                </div>
+                <span
+                  class="font-bold text-xs"
+                  style="color: var(--color-text-light)"
+                  >SaaS Admin Portal</span
+                >
+              </div>
+              <div class="flex items-center gap-2">
+                <span
+                  id="lbl-sim-std-light"
+                  class="px-2 py-0.5 rounded text-[9px] font-bold"
+                  style="
+                    background-color: var(--color-secondary-bg);
+                    color: var(--color-secondary);
+                  "
+                  >TIÊU CHUẨN</span
+                >
+                <div
+                  class="w-5 h-5 rounded-full"
+                  style="background-color: var(--color-primary-bg)"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Mock Sidebar & Body Layout -->
+            <div class="flex flex-1 overflow-hidden">
+              <!-- Sidebar -->
+              <div
+                class="w-12 border-r p-2 flex flex-col items-center gap-4"
+                style="
+                  background-color: var(--color-surface-light);
+                  border-color: var(--color-border-light);
+                "
+              >
+                <div
+                  class="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style="
+                    background-color: var(--color-primary-bg);
+                    color: var(--color-primary);
+                  "
+                >
+                  <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                </div>
+                <div
+                  class="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style="color: var(--color-text-muted-light)"
+                >
+                  <i data-lucide="users" class="w-4 h-4"></i>
+                </div>
+                <div
+                  class="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style="color: var(--color-text-muted-light)"
+                >
+                  <i data-lucide="settings" class="w-4 h-4"></i>
+                </div>
+              </div>
+
+              <!-- Main Dashboard Area -->
+              <div
+                class="flex-1 p-4 flex flex-col justify-between gap-3 overflow-y-auto"
+              >
+                <div class="space-y-2">
+                  <h3
+                    id="lbl-sim-overview-light"
+                    class="text-xs font-bold uppercase tracking-wider"
+                    style="color: var(--color-text-muted-light)"
+                  >
+                    Tổng quan hoạt động
+                  </h3>
+                  <div class="grid grid-cols-2 gap-3">
+                    <!-- Mini Stat Card 1 -->
+                    <div
+                      class="p-2.5 rounded-lg border"
+                      style="
+                        background-color: var(--color-surface-light);
+                        border-color: var(--color-border-light);
+                      "
+                    >
+                      <span
+                        id="lbl-sim-revenue-light"
+                        class="text-[9px] block"
+                        style="color: var(--color-text-muted-light)"
+                        >Doanh thu tuần</span
+                      >
+                      <span
+                        class="text-sm font-black"
+                        style="color: var(--color-primary)"
+                        >28,450,000đ</span
+                      >
+                    </div>
+                    <!-- Mini Stat Card 2 (Secondary Compliment) -->
+                    <div
+                      class="p-2.5 rounded-lg border"
+                      style="
+                        background-color: var(--color-secondary-bg);
+                        border-color: var(--color-border-light);
+                      "
+                    >
+                      <span
+                        id="lbl-sim-conversion-light"
+                        class="text-[9px] block"
+                        style="color: var(--color-secondary)"
+                        >Tỷ lệ chuyển đổi</span
+                      >
+                      <span
+                        class="text-sm font-black"
+                        style="color: var(--color-secondary)"
+                        >+14.2%</span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Interactive Mock Alert states inside Light Theme -->
+                <div
+                  class="flex items-center gap-2 p-2.5 rounded-lg border"
+                  style="
+                    background-color: oklch(72% 0.15 145 / 0.15);
+                    border-color: var(--color-success);
+                  "
+                >
+                  <i
+                    data-lucide="check-circle-2"
+                    class="w-4 h-4"
+                    style="color: var(--color-success)"
+                  ></i>
+                  <span
+                    id="lbl-sim-alert-light"
+                    class="text-[10px] font-semibold"
+                    style="color: var(--color-text-light)"
+                    >Hệ thống OKLCH vận hành ổn định 100%</span
+                  >
+                </div>
+
+                <!-- Card Action Buttons -->
+                <div class="flex gap-2 mt-auto">
+                  <button
+                    id="lbl-sim-btn1-light"
+                    class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold text-white transition active:scale-95 shadow"
+                    style="
+                      background-color: var(--color-primary);
+                      color: var(--color-on-primary);
+                    "
+                  >
+                    Xác nhận
+                  </button>
+                  <button
+                    id="lbl-sim-btn2-light"
+                    class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold border transition active:scale-95"
+                    style="
+                      background-color: var(--color-surface-light);
+                      border-color: var(--color-border-light);
+                      color: var(--color-text-muted-light);
+                    "
+                  >
+                    Hủy bỏ
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DARK MODE PREVIEW CARD -->
+          <div
+            class="rounded-xl border overflow-hidden flex flex-col h-[350px] shadow-lg transition-transform duration-200"
+            style="
+              background-color: var(--color-bg-dark);
+              border-color: var(--color-border-dark);
+              color: var(--color-text-dark);
+            "
+          >
+            <!-- Mock Header -->
+            <div
+              class="px-4 py-3 border-b flex justify-between items-center"
+              style="
+                background-color: var(--color-surface-dark);
+                border-color: var(--color-border-dark);
+              "
+            >
+              <div class="flex items-center gap-2">
+                <div
+                  class="w-6 h-6 rounded-lg flex items-center justify-center text-white"
+                  style="background-color: var(--color-primary)"
+                >
+                  <i
+                    data-lucide="rocket"
+                    class="w-3.5 h-3.5"
+                    style="filter: brightness(0) invert(1)"
+                  ></i>
+                </div>
+                <span
+                  class="font-bold text-xs"
+                  style="color: var(--color-text-dark)"
+                  >SaaS Admin Portal</span
+                >
+              </div>
+              <div class="flex items-center gap-2">
+                <span
+                  id="lbl-sim-std-dark"
+                  class="px-2 py-0.5 rounded text-[9px] font-bold"
+                  style="
+                    background-color: var(--color-secondary-bg);
+                    color: var(--color-secondary);
+                  "
+                  >TIÊU CHUẨN</span
+                >
+                <div
+                  class="w-5 h-5 rounded-full"
+                  style="background-color: var(--color-primary-bg)"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Mock Sidebar & Body Layout -->
+            <div class="flex flex-1 overflow-hidden">
+              <!-- Sidebar -->
+              <div
+                class="w-12 border-r p-2 flex flex-col items-center gap-4"
+                style="
+                  background-color: var(--color-surface-dark);
+                  border-color: var(--color-border-dark);
+                "
+              >
+                <div
+                  class="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style="
+                    background-color: var(--color-primary-bg);
+                    color: var(--color-primary);
+                  "
+                >
+                  <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                </div>
+                <div
+                  class="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style="color: var(--color-text-muted-dark)"
+                >
+                  <i data-lucide="users" class="w-4 h-4"></i>
+                </div>
+                <div
+                  class="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style="color: var(--color-text-muted-dark)"
+                >
+                  <i data-lucide="settings" class="w-4 h-4"></i>
+                </div>
+              </div>
+
+              <!-- Main Dashboard Area -->
+              <div
+                class="flex-1 p-4 flex flex-col justify-between gap-3 overflow-y-auto"
+              >
+                <div class="space-y-2">
+                  <h3
+                    id="lbl-sim-overview-dark"
+                    class="text-xs font-bold uppercase tracking-wider"
+                    style="color: var(--color-text-muted-dark)"
+                  >
+                    Tổng quan hoạt động
+                  </h3>
+                  <div class="grid grid-cols-2 gap-3">
+                    <!-- Mini Stat Card 1 -->
+                    <div
+                      class="p-2.5 rounded-lg border"
+                      style="
+                        background-color: var(--color-surface-dark);
+                        border-color: var(--color-border-dark);
+                      "
+                    >
+                      <span
+                        id="lbl-sim-revenue-dark"
+                        class="text-[9px] block"
+                        style="color: var(--color-text-muted-dark)"
+                        >Doanh thu tuần</span
+                      >
+                      <span
+                        class="text-sm font-black"
+                        style="color: var(--color-primary)"
+                        >28,450,000đ</span
+                      >
+                    </div>
+                    <!-- Mini Stat Card 2 (Secondary Compliment) -->
+                    <div
+                      class="p-2.5 rounded-lg border"
+                      style="
+                        background-color: var(--color-secondary-bg);
+                        border-color: var(--color-border-dark);
+                      "
+                    >
+                      <span
+                        id="lbl-sim-conversion-dark"
+                        class="text-[9px] block"
+                        style="color: var(--color-secondary)"
+                        >Tỷ lệ chuyển đổi</span
+                      >
+                      <span
+                        class="text-sm font-black"
+                        style="color: var(--color-secondary)"
+                        >+14.2%</span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Interactive Mock Alert states inside Dark Theme -->
+                <div
+                  class="flex items-center gap-2 p-2.5 rounded-lg border"
+                  style="
+                    background-color: oklch(62% 0.2 25 / 0.15);
+                    border-color: var(--color-danger);
+                  "
+                >
+                  <i
+                    data-lucide="alert-triangle"
+                    class="w-4 h-4"
+                    style="color: var(--color-danger)"
+                  ></i>
+                  <span
+                    id="lbl-sim-alert-dark"
+                    class="text-[10px] font-semibold"
+                    style="color: var(--color-text-dark)"
+                    >Báo động: Sát ngưỡng giới hạn sRGB cũ</span
+                  >
+                </div>
+
+                <!-- Card Action Buttons -->
+                <div class="flex gap-2 mt-auto">
+                  <button
+                    id="lbl-sim-btn1-dark"
+                    class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold text-white transition transform active:scale-95 shadow"
+                    style="
+                      background-color: var(--color-primary);
+                      color: var(--color-on-primary);
+                    "
+                  >
+                    Xác nhận
+                  </button>
+                  <button
+                    id="lbl-sim-btn2-dark"
+                    class="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold border transition active:scale-95"
+                    style="
+                      border-color: var(--color-border-dark);
+                      color: var(--color-text-muted-dark);
+                      background-color: var(--color-surface-dark);
+                    "
+                  >
+                    Hủy bỏ
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Optimized Explanation and Tutorial Section -->
+    <section
+      id="tutorial"
+      class="border-t border-slate-800 bg-slate-900/60 py-12 px-6"
+    >
+      <div class="max-w-4xl mx-auto space-y-8">
+        <div class="border-b border-slate-800 pb-4">
+          <h3
+            id="lbl-tuto-heading"
+            class="text-xl font-bold text-slate-100 flex items-center gap-2"
+          >
+            <i data-lucide="book-open" class="text-indigo-400 w-5 h-5"></i>
+            Bản chất học thuật & Hướng dẫn sử dụng OKLCH
+          </h3>
+          <p id="lbl-tuto-sub" class="text-xs text-slate-400 mt-1">
+            Cẩm nang hướng dẫn tinh gọn dành cho Nhà phát triển & Thiết kế giao
+            diện
+          </p>
+        </div>
+
+        <div
+          class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-slate-300"
+        >
+          <!-- Column 1 -->
+          <div
+            class="bg-slate-950 p-4 rounded-xl border border-slate-850 flex flex-col gap-2"
+          >
+            <div
+              class="flex items-center gap-2 text-indigo-400 font-bold text-xs uppercase tracking-wider"
+            >
+              <span
+                class="w-6 h-6 rounded-full bg-indigo-950 flex items-center justify-center text-[10px]"
+                >1</span
+              >
+              <span id="lbl-tuto-point1-title">Độ sáng nhận thức L</span>
+            </div>
+            <p
+              id="lbl-tuto-point1-desc"
+              class="text-xs text-slate-400 leading-relaxed"
+            >
+              Độ sáng trong OKLCH mô phỏng chính xác võng mạc mắt người. Khi
+              khóa nguyên L và đổi Hue, độ sáng thực tế không đổi. Rất hoàn hảo
+              để làm Design System đồng đều.
+            </p>
+          </div>
+          <!-- Column 2 -->
+          <div
+            class="bg-slate-950 p-4 rounded-xl border border-slate-850 flex flex-col gap-2"
+          >
+            <div
+              class="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider"
+            >
+              <span
+                class="w-6 h-6 rounded-full bg-emerald-950 flex items-center justify-center text-[10px]"
+                >2</span
+              >
+              <span id="lbl-tuto-point2-title">Độ bão hòa Chroma C</span>
+            </div>
+            <p
+              id="lbl-tuto-point2-desc"
+              class="text-xs text-slate-400 leading-relaxed"
+            >
+              Chroma đo mật độ hạt màu. Giới hạn màn hình thường là 0.4. Vượt
+              quá mức này màu sẽ tự động chuyển sang dải rộng Wide Gamut P3 nịnh
+              mắt trên màn hình đời mới.
+            </p>
+          </div>
+          <!-- Column 3 -->
+          <div
+            class="bg-slate-950 p-4 rounded-xl border border-slate-850 flex flex-col gap-2"
+          >
+            <div
+              class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider"
+            >
+              <span
+                class="w-6 h-6 rounded-full bg-amber-950 flex items-center justify-center text-[10px]"
+                >3</span
+              >
+              <span id="lbl-tuto-point3-title">Góc sắc độ Hue H</span>
+            </div>
+            <p
+              id="lbl-tuto-point3-desc"
+              class="text-xs text-slate-400 leading-relaxed"
+            >
+              Sắc độ là vòng tròn lượng giác từ 0° đến 360°. Với 0° chỉ tông Đỏ,
+              90° chỉ tông Vàng, 145° chỉ tông Lá mướt và 270° chỉ tông xanh
+              hoàng gia.
+            </p>
+          </div>
+        </div>
+
+        <div
+          class="p-4 bg-indigo-950/40 border border-indigo-900/50 rounded-xl text-xs text-indigo-300 space-y-2 leading-relaxed"
+        >
+          <p class="font-bold flex items-center gap-1.5 text-indigo-200">
+            <i data-lucide="lightbulb" class="w-4 h-4 text-yellow-400"></i>
+            <span id="lbl-tuto-tip-title">Mẹo viết CSS tối ưu:</span>
+          </p>
+          <p id="lbl-tuto-tip-desc">
+            Hãy nhúng các biến môi trường riêng rẽ vào dự án:
+            <code
+              class="text-white font-mono bg-indigo-950 px-1.5 py-0.5 rounded"
+              >--hue: 145;</code
+            >
+            và gọi hàm
+            <code
+              class="text-white font-mono bg-indigo-950 px-1.5 py-0.5 rounded"
+              >oklch(60% 0.15 var(--hue))</code
+            >
+            để dễ dàng đổi dải màu chủ đạo chỉ bằng cách xoay một con số duy
+            nhất!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer
+      class="border-t border-slate-800 bg-slate-950 py-6 text-center text-xs text-slate-500"
+    >
+      <div
+        class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+      >
+        <p id="lbl-footer-copyright">
+          © 2026 OKLCH Color Lab & Overlay Studio. Được thiết kế với cấu trúc
+          đơn tệp hiện đại.
+        </p>
+        <p class="flex items-center gap-1" id="lbl-footer-heart">
+          Hoàn thành xuất sắc
+          <i
+            data-lucide="heart"
+            class="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse"
+          ></i>
+          dành cho UI Designers & Web Developers
+        </p>
+      </div>
+    </footer>
+
+    <!-- Toast system for non-alert notifications -->
+    <div
+      id="toast-container"
+      class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"
+    ></div>
+
+    <!-- MAIN JAVASCRIPT LOGIC -->
+    <script>
+      // Language Translations dictionary
+      const TRANSLATIONS = {
+        vi: {
+          title: "OKLCH Color Lab",
+          subtitle:
+            "Trình chọn màu & thiết kế Overlay trực quan theo cảm nhận thị giác",
+          navTutorial: "Hướng dẫn",
+          panelCtrl: "Bộ điều khiển thông số",
+          btnEyedropper: "Hút màu",
+          btnReset: "Đặt lại",
+          ctrlL: "Độ sáng (Lightness)",
+          trackLMin: "0% (Đen)",
+          trackLMax: "100% (Trắng)",
+          ctrlC: "Độ bão hòa (Chroma)",
+          trackCMin: "0.0 (Xám)",
+          trackCMid: "0.2 (Vừa phải)",
+          trackCMax: "0.4 (Cực rực)",
+          ctrlH: "Góc sắc độ (Hue)",
+          wheelTag: "Góc Chọn",
+          trackHRed: "0° (Đỏ)",
+          trackHYellow: "90° (Vàng)",
+          trackHGreen: "145° (Lá)",
+          trackHBlue: "270° (Lam)",
+          ctrlA: "Độ trong suốt (Alpha/Overlay)",
+          trackAMin: "0% (Trong suốt)",
+          trackAMid: "50% (Bán trong)",
+          trackAMax: "100% (Đậm đặc)",
+          quickTitle: "Bảng màu mẫu xuất phát",
+          importTitle: "Nhập nhanh mã màu HEX bên ngoài",
+          btnSavePalette: "Lưu vào bảng tạm cá nhân",
+          outputTitle: "Mã màu CSS kết xuất",
+          opaqueTag: "Không mờ (100% Opaque)",
+          statusHue: "Trạng thái Hue:",
+          statusChroma: "Độ đậm thực tế:",
+          sandboxTitle: "Giả lập Overlay thực tế (Độ trong suốt)",
+          bgLandscape: "Phong cảnh",
+          bgGrid: "Lưới ô",
+          bgText: "Văn bản",
+          glassCardTitle: "Thử nghiệm kính mờ",
+          glassCardDesc:
+            "Thanh trượt Alpha hiện tại quyết định độ trong mờ của lớp phủ này. Hãy thay đổi L, C, H để xem dải màu phối trộn có bị cháy hoặc xám không.",
+          glassCardBtn1: "Xác nhận",
+          glassCardBtn2: "Đóng",
+          contrastHeading: "Độ tương phản & Kết quả trộn màu (Blending)",
+          contrastSub:
+            "Khi thiết kế giao diện có overlay trong suốt, trình duyệt sẽ tự pha trộn với nền thật bên dưới. Đây là mô phỏng chính xác màu sau khi bị pha trộn:",
+          blendLightTitle: "Trộn trên nền Sáng (#FFF)",
+          blendLightCode: "Mã màu hòa trộn cuối:",
+          contrastLightBlack: "Contrast chữ Đen:",
+          blendDarkTitle: "Trộn trên nền Tối (#0F172A)",
+          blendDarkCode: "Mã màu hòa trộn cuối:",
+          contrastDarkWhite: "Contrast chữ Trắng:",
+          contrastSwatches:
+            "Bảng màu tương phản tối ưu (Accessible Text Combinations)",
+          swatchOnPrimary: "Text on Primary",
+          swatchOnSecondary: "Text on Secondary",
+          swatchBgLight: "On Primary-Bg (Light)",
+          swatchBgDark: "On Primary-Bg (Dark)",
+          savedPalette: "Màu đã lưu của bạn",
+          btnClearPalette: "Xóa tất cả",
+          paletteEmpty:
+            "Chưa có màu nào được lưu trong phiên này. Hãy click 'Lưu vào bảng tạm cá nhân'.",
+          exportHeading: "Xuất CSS Variables",
+          prefixTag: "Tiền tố biến (Prefix)",
+          formatTag: "Định dạng màu",
+          swatchPreviewTitle: "Xem trước dải màu phát sinh:",
+          cssBlockTitle: "Mã CSS Variables tương ứng",
+          btnDownload: "Tải File CSS",
+          btnCopyAll: "Copy Toàn Bộ",
+          simTitle: "Giả lập Giao diện Dashboard Thực tế (UI Simulator)",
+          simDesc:
+            "Quan sát cách dải màu OKLCH thích ứng đồng đều theo cảm quan sinh học trên cả hai chế độ Sáng và Tối",
+          syncBadge: "Đồng bộ thời gian thực",
+          simStd: "TIÊU CHUẨN",
+          simOverview: "Tổng quan hoạt động",
+          simRevenue: "Doanh thu tuần",
+          simConversion: "Tỷ lệ chuyển đổi",
+          simAlertLight: "Hệ thống OKLCH vận hành ổn định 100%",
+          simAlertDark: "Báo động: Sát ngưỡng giới hạn sRGB cũ",
+          simBtn1: "Xác nhận",
+          simBtn2: "Hủy bỏ",
+          tutoHeading: "Bản chất học thuật & Hướng dẫn sử dụng OKLCH",
+          tutoSub:
+            "Cẩm nang hướng dẫn tinh gọn dành cho Nhà phát triển & Thiết kế giao diện",
+          tutoPoint1Title: "Độ sáng nhận thức L",
+          tutoPoint1Desc:
+            "Độ sáng trong OKLCH mô phỏng chính xác võng mạc mắt người. Khi khóa nguyên L và đổi Hue, độ sáng thực tế không đổi. Rất hoàn hảo để làm Design System đồng đều.",
+          tutoPoint2Title: "Độ bão hòa Chroma C",
+          tutoPoint2Desc:
+            "Chroma đo mật độ hạt màu. Giới hạn màn hình thường là 0.4. Vượt quá mức này màu sẽ tự động chuyển sang dải rộng Wide Gamut P3 nịnh mắt trên màn hình đời mới.",
+          tutoPoint3Title: "Góc sắc độ Hue H",
+          tutoPoint3Desc:
+            "Sắc độ là vòng tròn lượng giác từ 0° đến 360°. Với 0° chỉ tông Đỏ, 90° chỉ tông Vàng, 145° chỉ tông Lá mướt và 270° chỉ tông xanh hoàng gia.",
+          tutoTipTitle: "Mẹo viết CSS tối ưu:",
+          tutoTipDesc:
+            "Hãy nhúng các biến môi trường riêng rẽ vào dự án: --hue: 145; và gọi hàm oklch(60% 0.15 var(--hue)) để dễ dàng đổi dải màu chủ đạo chỉ bằng cách xoay một con số duy nhất!",
+          footerCopyright:
+            "© 2026 OKLCH Color Lab & Overlay Studio. Được thiết kế với cấu trúc đơn tệp hiện đại.",
+          footerHeart:
+            "Hoàn thành xuất sắc dành cho UI Designers & Web Developers",
+          themeLight: "Sáng",
+          themeDark: "Tối",
+          toastReset: "Đã khôi phục thông số mặc định",
+          toastClearPalette: "Đã dọn dẹp bộ sưu tập màu",
+          toastSaveColor: "Đã thêm màu vào bộ sưu tập.",
+          toastImportSuccess: "Đã nạp màu thành công từ HEX: #",
+          toastImportFail:
+            "Mã HEX không hợp lệ! Vui lòng nhập đúng định dạng (Ví dụ: #ff0055 hoặc ff0055).",
+          toastEyedropperActive:
+            "Đang kích hoạt Pipette... Hãy click vào bất kỳ điểm màu nào trên màn hình!",
+          toastEyedropperFail:
+            "Trình duyệt không hỗ trợ Pipette hút màu gốc. Hãy dùng Chrome/Edge hoặc dán mã HEX ở ô bên dưới!",
+          toastEyedropperSuccess: "Đã hút màu thành công: ",
+          toastShadeLoad: "Đã nạp dải sắc độ vào bộ tinh chỉnh!",
+          toastTokenLoad: "Đã nạp token UI vào bộ tinh chỉnh!",
+          toastCopySuccess: "Đã sao chép vào bộ nhớ tạm!",
+          toastCopyFail: "Lỗi! Không thể sao chép tự động",
+          toastCopyEnvironFail:
+            "Môi trường bảo mật không cho phép sao chép tự động.",
+          toastDownloadSuccess: "Đã tải file CSS thành công!",
+          previewShades: "Dải sắc độ phát sinh tự động (--color-",
+          previewFull:
+            "Bảng màu UI đầy đủ (đã cân bằng thị giác dựa trên màu chủ đạo):",
+          previewSaved: "Bảng màu đã lưu cá nhân của bạn làm CSS Variables:",
+        },
+        en: {
+          title: "OKLCH Color Lab",
+          subtitle:
+            "Interactive color picker & overlay designer using human visual perception",
+          navTutorial: "Tutorial",
+          panelCtrl: "Control Panel",
+          btnEyedropper: "Eyedropper",
+          btnReset: "Reset",
+          ctrlL: "Lightness (L)",
+          trackLMin: "0% (Black)",
+          trackLMax: "100% (White)",
+          ctrlC: "Chroma (C)",
+          trackCMin: "0.0 (Gray)",
+          trackCMid: "0.2 (Medium)",
+          trackCMax: "0.4 (Vivid)",
+          ctrlH: "Hue (H)",
+          wheelTag: "Hue Angle",
+          trackHRed: "0° (Red)",
+          trackHYellow: "90° (Yellow)",
+          trackHGreen: "145° (Green)",
+          trackHBlue: "270° (Blue)",
+          ctrlA: "Alpha / Opacity (A)",
+          trackAMin: "0% (Transparent)",
+          trackAMid: "50% (Translucent)",
+          trackAMax: "100% (Opaque)",
+          quickTitle: "Quick Start Swatches",
+          importTitle: "Import External HEX Color",
+          btnSavePalette: "Save to Local Palette",
+          outputTitle: "CSS Color Outputs",
+          opaqueTag: "100% Opaque (No Alpha)",
+          statusHue: "Hue Status:",
+          statusChroma: "Chroma Level:",
+          sandboxTitle: "Real-time Overlay Simulator",
+          bgLandscape: "Landscape",
+          bgGrid: "Checkerboard",
+          bgText: "Text Console",
+          glassCardTitle: "Glassmorphic Card",
+          glassCardDesc:
+            "The Alpha slider directly controls the transparency of this overlay. Adjust L, C, and H to see if blended colors look washed out or burnt.",
+          glassCardBtn1: "Confirm",
+          glassCardBtn2: "Close",
+          contrastHeading: "Contrast & Alpha Blending Results",
+          contrastSub:
+            "When designing translucent overlays, the browser blends it with the underlying backdrop. Here is the mathematically accurate output:",
+          blendLightTitle: "Blended on Light Backdrop (#FFF)",
+          blendLightCode: "Final Blended Hex:",
+          contrastLightBlack: "Contrast against Black Text:",
+          blendDarkTitle: "Blended on Dark Backdrop (#0F172A)",
+          blendDarkCode: "Final Blended Hex:",
+          contrastDarkWhite: "Contrast against White Text:",
+          contrastSwatches: "Accessible Text Combinations (WCAG)",
+          swatchOnPrimary: "Text on Primary",
+          swatchOnSecondary: "Text on Secondary",
+          swatchBgLight: "On Primary-Bg (Light)",
+          swatchBgDark: "On Primary-Bg (Dark)",
+          savedPalette: "Your Saved Palette",
+          btnClearPalette: "Clear All",
+          paletteEmpty:
+            "No colors saved in this session. Click 'Save to Local Palette' on the left to start.",
+          exportHeading: "Export CSS Variables",
+          prefixTag: "Variable Prefix",
+          formatTag: "Color Format",
+          swatchPreviewTitle: "Generated Palette Preview:",
+          cssBlockTitle: "Corresponding CSS Variables",
+          btnDownload: "Download CSS",
+          btnCopyAll: "Copy Code",
+          simTitle: "Dashboard UI Simulator",
+          simDesc:
+            "Observe how the OKLCH palette adapts symmetrically across both Light and Dark modes using biology-based optics",
+          syncBadge: "Live Synchronized",
+          simStd: "STANDARD",
+          simOverview: "Activity Overview",
+          simRevenue: "Weekly Revenue",
+          simConversion: "Conversion Rate",
+          simAlertLight: "All OKLCH systems operating smoothly at 100%",
+          simAlertDark: "Warning: Approaching sRGB gamut boundaries",
+          simBtn1: "Confirm",
+          simBtn2: "Cancel",
+          tutoHeading: "Science & Practical Guide of OKLCH",
+          tutoSub:
+            "Concise handbook optimized for UI/UX Designers & Frontend Developers",
+          tutoPoint1Title: "Perceptual Lightness L",
+          tutoPoint1Desc:
+            "Lightness in OKLCH models human retina response. Locking L and changing Hue keeps perceived brightness constant. Ideal for uniform Design Systems.",
+          tutoPoint2Title: "Chroma C (Purity)",
+          tutoPoint2Desc:
+            "Chroma measures color concentration. Hardware limit is usually 0.4. Exceeding this automatically shifts to Wide Gamut P3 on modern displays.",
+          tutoPoint3Title: "Hue Angle H",
+          tutoPoint3Desc:
+            "Hue is a circular coordinate from 0° to 360°. 0° indicates Red/Pink, 90° for Yellow, 145° for Green, and 270° for deep royal Blue.",
+          tutoTipTitle: "Optimized CSS Tip:",
+          tutoTipDesc:
+            "Embed separated environmental variables into your project like: --hue: 145; and call oklch(60% 0.15 var(--hue)) to shift your main theme by rotating a single number!",
+          footerCopyright:
+            "© 2026 OKLCH Color Lab & Overlay Studio. Engineered as a single modern standalone file.",
+          footerHeart:
+            "Crafted with excellence for UI Designers & Web Developers",
+          themeLight: "Light",
+          themeDark: "Dark",
+          toastReset: "Parameters reset to default",
+          toastClearPalette: "Cleared saved colors",
+          toastSaveColor: "Added color to palette.",
+          toastImportSuccess: "Successfully loaded color from HEX: #",
+          toastImportFail:
+            "Invalid HEX code! Please input a valid format (e.g., #ff0055 or ff0055).",
+          toastEyedropperActive:
+            "Eyedropper activated! Click anywhere on your screen to pick a pixel.",
+          toastEyedropperFail:
+            "Browser does not support native EyeDropper. Try Chrome/Edge or paste HEX code below!",
+          toastEyedropperSuccess: "Color successfully picked: ",
+          toastShadeLoad: "Loaded shade into workspace!",
+          toastTokenLoad: "Loaded UI token into workspace!",
+          toastCopySuccess: "Copied to clipboard!",
+          toastCopyFail: "Error! Unable to copy automatically",
+          toastCopyEnvironFail: "Security context prevents clipboard access.",
+          toastDownloadSuccess: "oklch-theme downloaded successfully!",
+          previewShades: "Auto-generated shade scale (--color-",
+          previewFull:
+            "Full UI design system tokens (mathematically balanced):",
+          previewSaved: "Your custom saved colors mapped as CSS variables:",
+        },
+      };
+
+      // Core State
+      let state = {
+        L: 65.0, // Lightness % (0 - 100)
+        C: 0.18, // Chroma (0.0 - 0.4)
+        H: 145.0, // Hue (0 - 360)
+        A: 85.0, // Opacity % (0 - 100)
+        theme: "dark", // App wrapper theme 'light' | 'dark'
+        activeBg: "photo", // Simulator background 'photo' | 'grid' | 'text'
+        savedColors: [],
+        lang: "vi", // Language 'vi' | 'en'
+
+        // CSS Variables Generator State
+        genSource: "shades", // 'shades' | 'full' | 'saved'
+        genPrefix: "primary",
+        genFormat: "oklch", // 'oklch' | 'hex'
+      };
+
+      // Track drag state on Hue circular wheel
+      let isDraggingWheel = false;
+
+      // Standard Quick Start Colors to populate palette selectors
+      const QUICK_COLORS = [
+        { name_vi: "Đỏ Neon", name_en: "Neon Red", l: 60, c: 0.25, h: 25 },
+        { name_vi: "Cam Ấm", name_en: "Warm Orange", l: 70, c: 0.2, h: 70 },
+        {
+          name_vi: "Vàng Nắng",
+          name_en: "Sunny Yellow",
+          l: 85,
+          c: 0.18,
+          h: 95,
+        },
+        { name_vi: "Lá Mint", name_en: "Mint Green", l: 75, c: 0.17, h: 150 },
+        { name_vi: "Sky Blue", name_en: "Sky Blue", l: 65, c: 0.22, h: 250 },
+        {
+          name_vi: "Tím Mộng",
+          name_en: "Dreamy Purple",
+          l: 55,
+          c: 0.24,
+          h: 300,
+        },
+        {
+          name_vi: "Đào Pastel",
+          name_en: "Pastel Peach",
+          l: 80,
+          c: 0.08,
+          h: 45,
+        },
+        { name_vi: "Xám Xanh", name_en: "Slate Gray", l: 40, c: 0.03, h: 240 },
+        { name_vi: "Hồng Sen", name_en: "Lotus Pink", l: 60, c: 0.24, h: 350 },
+        {
+          name_vi: "Xanh Emerald",
+          name_en: "Emerald Green",
+          l: 55,
+          c: 0.2,
+          h: 160,
+        },
+      ];
+
+      // Backgrounds configuration
+      const BG_COLORS = {
+        light: { r: 255, g: 255, b: 255, hex: "#FFFFFF" },
+        dark: { r: 15, g: 23, b: 42, hex: "#0F172A" }, // Slate-900 background for dark blending
+      };
+
+      // Initial setup on window load
+      window.onload = function () {
+        // Load lucide icons
+        lucide.createIcons();
+
+        // Setup Event Listeners
+        initEventListeners();
+
+        // Build Quick Color Palette
+        renderQuickColors();
+
+        // Load saved colors from session storage if exists
+        loadPaletteFromStorage();
+
+        // Sync Language translation labels
+        updateLanguageUI();
+
+        // Sync GUI controls
+        updateUI();
+      };
+
+      function initEventListeners() {
+        // Sliders & Number Input Binding
+        setupSliderNumberPair("input-l", "num-l", "L", 100);
+        setupSliderNumberPair("input-c", "num-c", "C", 1);
+        setupSliderNumberPair("input-h", "num-h", "H", 1);
+        setupSliderNumberPair("input-a", "num-a", "A", 100);
+
+        // Circular Hue Wheel drag listeners
+        setupHueWheelPicker();
+
+        // Theme selectors
+        document
+          .getElementById("btn-theme-light")
+          .addEventListener("click", function () {
+            setTheme("light");
+          });
+        document
+          .getElementById("btn-theme-dark")
+          .addEventListener("click", function () {
+            setTheme("dark");
+          });
+
+        // Language selectors
+        document
+          .getElementById("btn-lang-vi")
+          .addEventListener("click", function () {
+            toggleLanguage("vi");
+          });
+        document
+          .getElementById("btn-lang-en")
+          .addEventListener("click", function () {
+            toggleLanguage("en");
+          });
+
+        // Reset button
+        document
+          .getElementById("btn-reset")
+          .addEventListener("click", function () {
+            state.L = 65;
+            state.C = 0.18;
+            state.H = 145;
+            state.A = 85;
+            updateUI();
+            showToast(TRANSLATIONS[state.lang].toastReset);
+          });
+
+        // Save palette button
+        document
+          .getElementById("btn-save-palette")
+          .addEventListener("click", function () {
+            saveCurrentColorToPalette();
+          });
+
+        // Clear palette button
+        document
+          .getElementById("btn-clear-palette")
+          .addEventListener("click", function () {
+            state.savedColors = [];
+            localStorage.removeItem("oklch_saved_colors");
+            renderSavedPalette();
+            showToast(TRANSLATIONS[state.lang].toastClearPalette);
+          });
+
+        // Background Switchers for Simulated Viewport
+        document
+          .getElementById("bg-opt-photo")
+          .addEventListener("click", function () {
+            setSandboxBg("photo");
+          });
+        document
+          .getElementById("bg-opt-grid")
+          .addEventListener("click", function () {
+            setSandboxBg("grid");
+          });
+        document
+          .getElementById("bg-opt-text")
+          .addEventListener("click", function () {
+            setSandboxBg("text");
+          });
+
+        // CSS Variables Generator Event Listeners
+        setupCSSGeneratorListeners();
+
+        // Add Eyedropper API and HEX Import listeners
+        setupEyedropperAndImport();
+
+        // Download CSS Trigger listener
+        document
+          .getElementById("btn-download-css")
+          .addEventListener("click", downloadCSSFile);
+      }
+
+      // Toggle app language VI / EN
+      function toggleLanguage(lang) {
+        state.lang = lang;
+        const btnVi = document.getElementById("btn-lang-vi");
+        const btnEn = document.getElementById("btn-lang-en");
+
+        if (lang === "vi") {
+          btnVi.className =
+            "px-2.5 py-1.5 rounded-md transition-all bg-slate-700 text-white font-semibold";
+          btnEn.className =
+            "px-2.5 py-1.5 rounded-md transition-all text-slate-400 hover:text-slate-200";
+        } else {
+          btnEn.className =
+            "px-2.5 py-1.5 rounded-md transition-all bg-slate-700 text-white font-semibold";
+          btnVi.className =
+            "px-2.5 py-1.5 rounded-md transition-all text-slate-400 hover:text-slate-200";
+        }
+
+        updateLanguageUI();
+        renderQuickColors();
+        renderSavedPalette();
+        updateUI();
+      }
+
+      // Translate static UI DOM labels
+      function updateLanguageUI() {
+        const dictionary = TRANSLATIONS[state.lang];
+
+        document.getElementById("ui-title").innerText = dictionary.title;
+        document.getElementById("ui-subtitle").innerText = dictionary.subtitle;
+        document.getElementById("lbl-nav-tutorial").innerHTML =
+          '<i data-lucide="help-circle" class="w-4 h-4"></i> ' +
+          dictionary.navTutorial;
+        document.getElementById("lbl-panel-ctrl").innerHTML =
+          '<i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i> ' +
+          dictionary.panelCtrl;
+        document.getElementById("lbl-btn-eyedropper").innerText =
+          dictionary.btnEyedropper;
+        document.getElementById("lbl-btn-reset").innerText =
+          dictionary.btnReset;
+
+        document.getElementById("lbl-ctrl-l").innerHTML =
+          '<span class="w-5 h-5 rounded bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-mono border border-slate-700">L</span>' +
+          dictionary.ctrlL;
+        document.getElementById("lbl-track-l-min").innerText =
+          dictionary.trackLMin;
+        document.getElementById("lbl-track-l-max").innerText =
+          dictionary.trackLMax;
+
+        document.getElementById("lbl-ctrl-c").innerHTML =
+          '<span class="w-5 h-5 rounded bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-mono border border-slate-700">C</span>' +
+          dictionary.ctrlC;
+        document.getElementById("lbl-track-c-min").innerText =
+          dictionary.trackCMin;
+        document.getElementById("lbl-track-c-mid").innerText =
+          dictionary.trackCMid;
+        document.getElementById("lbl-track-c-max").innerText =
+          dictionary.trackCMax;
+
+        document.getElementById("lbl-ctrl-h").innerHTML =
+          '<span class="w-5 h-5 rounded bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-mono border border-slate-700">H</span>' +
+          dictionary.ctrlH;
+        document.getElementById("lbl-wheel-tag").innerText =
+          dictionary.wheelTag;
+        document.getElementById("lbl-track-h-red").innerText =
+          dictionary.trackHRed;
+        document.getElementById("lbl-track-h-yellow").innerText =
+          dictionary.trackHYellow;
+        document.getElementById("lbl-track-h-green").innerText =
+          dictionary.trackHGreen;
+        document.getElementById("lbl-track-h-blue").innerText =
+          dictionary.trackHBlue;
+
+        document.getElementById("lbl-ctrl-a").innerHTML =
+          '<span class="w-5 h-5 rounded bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-mono border border-slate-700">A</span>' +
+          dictionary.ctrlA;
+        document.getElementById("lbl-track-a-min").innerText =
+          dictionary.trackAMin;
+        document.getElementById("lbl-track-a-mid").innerText =
+          dictionary.trackAMid;
+        document.getElementById("lbl-track-a-max").innerText =
+          dictionary.trackAMax;
+
+        document.getElementById("lbl-quick-title").innerText =
+          dictionary.quickTitle;
+        document.getElementById("lbl-import-title").innerHTML =
+          '<i data-lucide="clipboard" class="w-3.5 h-3.5 text-indigo-400"></i> ' +
+          dictionary.importTitle;
+        document.getElementById("lbl-btn-save-palette").innerText =
+          dictionary.btnSavePalette;
+
+        document.getElementById("lbl-output-title").innerText =
+          dictionary.outputTitle;
+        document.getElementById("lbl-opaque-tag").innerText =
+          dictionary.opaqueTag;
+        document.getElementById("lbl-status-hue").innerText =
+          dictionary.statusHue;
+        document.getElementById("lbl-status-chroma").innerText =
+          dictionary.statusChroma;
+
+        document.getElementById("lbl-sandbox-title").innerHTML =
+          '<i data-lucide="layers" class="w-4 h-4 text-sky-400"></i> ' +
+          dictionary.sandboxTitle;
+        document.getElementById("bg-opt-photo").innerText =
+          dictionary.bgLandscape;
+        document.getElementById("bg-opt-grid").innerText = dictionary.bgGrid;
+        document.getElementById("bg-opt-text").innerText = dictionary.bgText;
+
+        document.getElementById("lbl-glass-card-title").innerText =
+          dictionary.glassCardTitle;
+        document.getElementById("lbl-glass-card-desc").innerText =
+          dictionary.glassCardDesc;
+        document.getElementById("lbl-glass-card-btn1").innerText =
+          dictionary.glassCardBtn1;
+        document.getElementById("lbl-glass-card-btn2").innerText =
+          dictionary.glassCardBtn2;
+
+        document.getElementById("lbl-contrast-heading").innerHTML =
+          '<i data-lucide="check-square" class="w-4 h-4 text-emerald-400"></i> ' +
+          dictionary.contrastHeading;
+        document.getElementById("lbl-contrast-sub").innerText =
+          dictionary.contrastSub;
+        document.getElementById("lbl-blend-light-title").innerText =
+          dictionary.blendLightTitle;
+        document.getElementById("lbl-blend-light-code").innerText =
+          dictionary.blendLightCode;
+        document.getElementById("lbl-contrast-light-black").innerText =
+          dictionary.contrastLightBlack;
+        document.getElementById("lbl-blend-dark-title").innerText =
+          dictionary.blendDarkTitle;
+        document.getElementById("lbl-blend-dark-code").innerText =
+          dictionary.blendDarkCode;
+        document.getElementById("lbl-contrast-dark-white").innerText =
+          dictionary.contrastDarkWhite;
+        document.getElementById("lbl-contrast-swatches").innerText =
+          dictionary.contrastSwatches;
+
+        document.getElementById("lbl-swatch-on-primary").innerText =
+          dictionary.swatchOnPrimary;
+        document.getElementById("lbl-swatch-on-secondary").innerText =
+          dictionary.swatchOnSecondary;
+        document.getElementById("lbl-swatch-bg-light").innerText =
+          dictionary.swatchBgLight;
+        document.getElementById("lbl-swatch-bg-dark").innerText =
+          dictionary.swatchBgDark;
+
+        document.getElementById("lbl-saved-palette-shelf").innerText =
+          dictionary.savedPalette;
+        document.getElementById("btn-clear-palette").innerText =
+          dictionary.btnClearPalette;
+
+        document.getElementById("lbl-export-heading").innerHTML =
+          '<i data-lucide="code" class="w-4 h-4 text-emerald-400"></i> ' +
+          dictionary.exportHeading;
+        document.getElementById("lbl-prefix-tag").innerText =
+          dictionary.prefixTag;
+        document.getElementById("lbl-format-tag").innerText =
+          dictionary.formatTag;
+        document.getElementById("lbl-css-block-title").innerText =
+          dictionary.cssBlockTitle;
+        document.getElementById("lbl-btn-download").innerText =
+          dictionary.btnDownload;
+        document.getElementById("lbl-btn-copy-all").innerText =
+          dictionary.btnCopyAll;
+
+        document.getElementById("lbl-sim-title").innerHTML =
+          '<i data-lucide="monitor-play" class="w-5 h-5 text-indigo-400"></i> ' +
+          dictionary.simTitle;
+        document.getElementById("lbl-sim-desc").innerText = dictionary.simDesc;
+        document.getElementById("lbl-sync-badge").innerText =
+          dictionary.syncBadge;
+        document.getElementById("lbl-sim-std-light").innerText =
+          dictionary.simStd;
+        document.getElementById("lbl-sim-std-dark").innerText =
+          dictionary.simStd;
+
+        document.getElementById("lbl-sim-overview-light").innerText =
+          dictionary.simOverview;
+        document.getElementById("lbl-sim-revenue-light").innerText =
+          dictionary.simRevenue;
+        document.getElementById("lbl-sim-conversion-light").innerText =
+          dictionary.simConversion;
+        document.getElementById("lbl-sim-alert-light").innerText =
+          dictionary.simAlertLight;
+        document.getElementById("lbl-sim-btn1-light").innerText =
+          dictionary.simBtn1;
+        document.getElementById("lbl-sim-btn2-light").innerText =
+          dictionary.simBtn2;
+
+        document.getElementById("lbl-sim-overview-dark").innerText =
+          dictionary.simOverview;
+        document.getElementById("lbl-sim-revenue-dark").innerText =
+          dictionary.simRevenue;
+        document.getElementById("lbl-sim-conversion-dark").innerText =
+          dictionary.simConversion;
+        document.getElementById("lbl-sim-alert-dark").innerText =
+          dictionary.simAlertDark;
+        document.getElementById("lbl-sim-btn1-dark").innerText =
+          dictionary.simBtn1;
+        document.getElementById("lbl-sim-btn2-dark").innerText =
+          dictionary.simBtn2;
+
+        document.getElementById("lbl-tuto-heading").innerHTML =
+          '<i data-lucide="book-open" class="text-indigo-400 w-5 h-5"></i> ' +
+          dictionary.tutoHeading;
+        document.getElementById("lbl-tuto-sub").innerText = dictionary.tutoSub;
+        document.getElementById("lbl-tuto-point1-title").innerText =
+          dictionary.tutoPoint1Title;
+        document.getElementById("lbl-tuto-point1-desc").innerText =
+          dictionary.tutoPoint1Desc;
+        document.getElementById("lbl-tuto-point2-title").innerText =
+          dictionary.tutoPoint2Title;
+        document.getElementById("lbl-tuto-point2-desc").innerText =
+          dictionary.tutoPoint2Desc;
+        document.getElementById("lbl-tuto-point3-title").innerText =
+          dictionary.tutoPoint3Title;
+        document.getElementById("lbl-tuto-point3-desc").innerText =
+          dictionary.tutoPoint3Desc;
+        document.getElementById("lbl-tuto-tip-title").innerText =
+          dictionary.tutoTipTitle;
+        document.getElementById("lbl-tuto-tip-desc").innerHTML =
+          dictionary.tutoTipDesc;
+
+        document.getElementById("lbl-footer-copyright").innerText =
+          dictionary.footerCopyright;
+        document.getElementById("lbl-footer-heart").innerHTML =
+          'Hoàn thành xuất sắc <i data-lucide="heart" class="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse"></i> dành cho UI Designers & Web Developers';
+
+        document.getElementById("lbl-theme-light").innerText =
+          dictionary.themeLight;
+        document.getElementById("lbl-theme-dark").innerText =
+          dictionary.themeDark;
+
+        // Reinitialize Lucide Icons for dynamic text
+        lucide.createIcons();
+      }
+
+      // Connect a slider and an input box to maintain identical state values
+      function setupSliderNumberPair(sliderId, numId, stateKey, scaleFactor) {
+        const sliders = document.querySelectorAll(
+          'input[type="range"]#' + sliderId,
+        );
+        const num = document.getElementById(numId);
+
+        sliders.forEach((slider) => {
+          slider.addEventListener("input", (e) => {
+            state[stateKey] = parseFloat(e.target.value);
+            num.value = state[stateKey];
+            updateUI();
+          });
+        });
+
+        num.addEventListener("input", (e) => {
+          let val = parseFloat(e.target.value);
+          if (isNaN(val)) return;
+
+          // Clamp inputs safely
+          const max = stateKey === "C" ? 0.4 : stateKey === "H" ? 360 : 100;
+          const min = 0;
+          val = Math.max(min, Math.min(max, val));
+
+          state[stateKey] = val;
+
+          sliders.forEach((slider) => {
+            slider.value = val;
+          });
+          updateUI();
+        });
+      }
+
+      function setupHueWheelPicker() {
+        const wheelContainer = document.getElementById("hue-wheel-container");
+
+        const handleWheelMove = (clientX, clientY) => {
+          const rect = wheelContainer.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+
+          // Calculate angle from center of wheel (3 o'clock is 0 rad/deg)
+          let radians = Math.atan2(clientY - centerY, clientX - centerX);
+          let degrees = radians * (180 / Math.PI);
+
+          if (degrees < 0) {
+            degrees += 360;
+          }
+
+          state.H = Math.round(degrees * 10) / 10; // Round to 1 decimal place
+          updateUI();
+        };
+
+        // Mouse Events
+        wheelContainer.addEventListener("mousedown", (e) => {
+          isDraggingWheel = true;
+          handleWheelMove(e.clientX, e.clientY);
+        });
+
+        document.addEventListener("mousemove", (e) => {
+          if (!isDraggingWheel) return;
+          handleWheelMove(e.clientX, e.clientY);
+        });
+
+        document.addEventListener("mouseup", () => {
+          isDraggingWheel = false;
+        });
+
+        // Touch Events (Mobile)
+        wheelContainer.addEventListener(
+          "touchstart",
+          (e) => {
+            isDraggingWheel = true;
+            if (e.touches.length > 0) {
+              handleWheelMove(e.touches[0].clientX, e.touches[0].clientY);
+            }
+            e.preventDefault(); // Prevent bounce scroll
+          },
+          { passive: false },
+        );
+
+        document.addEventListener(
+          "touchmove",
+          (e) => {
+            if (!isDraggingWheel) return;
+            if (e.touches.length > 0) {
+              handleWheelMove(e.touches[0].clientX, e.touches[0].clientY);
+            }
+          },
+          { passive: true },
+        );
+
+        document.addEventListener("touchend", () => {
+          isDraggingWheel = false;
+        });
+      }
+
+      function setupCSSGeneratorListeners() {
+        const tabShades = document.getElementById("tab-gen-shades");
+        const tabFull = document.getElementById("tab-gen-full");
+        const tabSaved = document.getElementById("tab-gen-saved");
+
+        const setActiveTab = (active, inactives) => {
+          active.className =
+            "px-2.5 py-1 rounded transition bg-slate-800 text-white font-medium";
+          inactives.forEach(
+            (el) =>
+              (el.className =
+                "px-2.5 py-1 rounded transition text-slate-400 hover:text-slate-200"),
+          );
+        };
+
+        tabShades.addEventListener("click", () => {
+          state.genSource = "shades";
+          setActiveTab(tabShades, [tabFull, tabSaved]);
+          updateUI();
+        });
+
+        tabFull.addEventListener("click", () => {
+          state.genSource = "full";
+          setActiveTab(tabFull, [tabShades, tabSaved]);
+          updateUI();
+        });
+
+        tabSaved.addEventListener("click", () => {
+          state.genSource = "saved";
+          setActiveTab(tabSaved, [tabShades, tabFull]);
+          updateUI();
+        });
+
+        // Prefix input
+        const prefixInput = document.getElementById("gen-prefix-input");
+        prefixInput.addEventListener("input", (e) => {
+          // Sanitize input to safe CSS variable naming format
+          state.genPrefix = e.target.value
+            .toLowerCase()
+            .replace(/[^a-z0-9_-]/g, "");
+          prefixInput.value = state.genPrefix;
+          updateUI();
+        });
+
+        // Export format switching (oklch vs hex)
+        const btnFmtOklch = document.getElementById("btn-fmt-oklch");
+        const btnFmtHex = document.getElementById("btn-fmt-hex");
+
+        btnFmtOklch.addEventListener("click", () => {
+          state.genFormat = "oklch";
+          btnFmtOklch.className =
+            "py-1 rounded text-center transition font-semibold bg-slate-800 text-indigo-400";
+          btnFmtHex.className =
+            "py-1 rounded text-center transition text-slate-400 hover:text-slate-200";
+          updateUI();
+        });
+
+        btnFmtHex.addEventListener("click", () => {
+          state.genFormat = "hex";
+          btnFmtHex.className =
+            "py-1 rounded text-center transition font-semibold bg-slate-800 text-indigo-400";
+          btnFmtOklch.className =
+            "py-1 rounded text-center transition text-slate-400 hover:text-slate-200";
+          updateUI();
+        });
+      }
+
+      // Eyedropper API & Custom HEX Import binding logic
+      function setupEyedropperAndImport() {
+        const btnEyedropper = document.getElementById("btn-eyedropper");
+        const btnImport = document.getElementById("btn-import-hex");
+        const inputImport = document.getElementById("input-import-hex");
+
+        // 1. EyeDropper API (Chromium native screen pixel picker)
+        btnEyedropper.addEventListener("click", async () => {
+          if (!("EyeDropper" in window)) {
+            showToast(TRANSLATIONS[state.lang].toastEyedropperFail);
+            return;
+          }
+
+          try {
+            const eyeDropper = new EyeDropper();
+            showToast(TRANSLATIONS[state.lang].toastEyedropperActive);
+
+            const result = await eyeDropper.open();
+            const pickedHex = result.sRGBHex; // e.g. #f0145a
+
+            const rgb = hexToRgb(pickedHex);
+            if (rgb) {
+              const oklch = rgbToOklch(rgb.r, rgb.g, rgb.b);
+              state.L = oklch.l;
+              state.C = oklch.c;
+              state.H = oklch.h;
+              updateUI();
+              showToast(
+                TRANSLATIONS[state.lang].toastEyedropperSuccess +
+                  pickedHex.toUpperCase(),
+              );
+            }
+          } catch (err) {
+            console.log("Pipette picker canceled or error: ", err);
+          }
+        });
+
+        // 2. Paste Hex Color code input parser
+        btnImport.addEventListener("click", () => {
+          const rawValue = inputImport.value.trim();
+          if (!rawValue) return;
+
+          const rgb = hexToRgb(rawValue);
+          if (rgb) {
+            const oklch = rgbToOklch(rgb.r, rgb.g, rgb.b);
+            state.L = oklch.l;
+            state.C = oklch.c;
+            state.H = oklch.h;
+            updateUI();
+            showToast(
+              TRANSLATIONS[state.lang].toastImportSuccess +
+                rgbToHex(rgb.r, rgb.g, rgb.b),
+            );
+            inputImport.value = ""; // Clean input
+          } else {
+            showToast(TRANSLATIONS[state.lang].toastImportFail);
+          }
+        });
+
+        // Allow hitting Enter on text input
+        inputImport.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            btnImport.click();
+          }
+        });
+      }
+
+      // Quick setup predefined color palette chips
+      function renderQuickColors() {
+        const container = document.getElementById("quick-colors-container");
+        container.innerHTML = "";
+
+        QUICK_COLORS.slice(0, 10).forEach((color) => {
+          const btn = document.createElement("button");
+          btn.className =
+            "group h-8 rounded-lg border border-slate-800 relative overflow-hidden transition transform hover:-translate-y-0.5 active:translate-y-0 shadow-sm";
+
+          const translatedName =
+            state.lang === "vi" ? color.name_vi : color.name_en;
+          btn.title =
+            translatedName +
+            ": oklch(" +
+            color.l +
+            "% " +
+            color.c +
+            " " +
+            color.h +
+            ")";
+          btn.style.backgroundColor =
+            "oklch(" + color.l + "% " + color.c + " " + color.h + ")";
+
+          // Add tiny tooltip/accent inside
+          btn.innerHTML =
+            '<span class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity"></span>';
+
+          btn.addEventListener("click", () => {
+            state.L = color.l;
+            state.C = color.c;
+            state.H = color.h;
+            updateUI();
+            showToast("Ok: " + translatedName);
+          });
+
+          container.appendChild(btn);
+        });
+      }
+
+      // Theme Switch
+      function setTheme(theme) {
+        state.theme = theme;
+        const btnLight = document.getElementById("btn-theme-light");
+        const btnDark = document.getElementById("btn-theme-dark");
+        const glassCard = document.getElementById("overlay-glass-card");
+
+        if (theme === "light") {
+          document.body.classList.remove("bg-slate-950", "text-slate-100");
+          document.body.classList.add("bg-slate-50", "text-slate-900");
+          btnLight.className =
+            "px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all bg-white text-slate-800 shadow-sm font-semibold border border-slate-200";
+          btnDark.className =
+            "px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all text-slate-500 hover:text-slate-800";
+
+          // Soft light theme styling adjusters
+          glassCard.classList.remove("dark");
+        } else {
+          document.body.classList.remove("bg-slate-50", "text-slate-900");
+          document.body.classList.add("bg-slate-950", "text-slate-100");
+          btnLight.className =
+            "px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all text-slate-400 hover:text-slate-200";
+          btnDark.className =
+            "px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all bg-slate-700 text-white shadow-sm font-semibold";
+
+          glassCard.classList.add("dark");
+        }
+      }
+
+      // Viewport Background Switch
+      function setSandboxBg(type) {
+        state.activeBg = type;
+        const optPhoto = document.getElementById("bg-opt-photo");
+        const optGrid = document.getElementById("bg-opt-grid");
+        const optText = document.getElementById("bg-opt-text");
+
+        const lPhoto = document.getElementById("layer-photo");
+        const lGrid = document.getElementById("layer-grid");
+        const lText = document.getElementById("layer-text");
+
+        // Reset buttons
+        [optPhoto, optGrid, optText].forEach((btn) => {
+          btn.className =
+            "px-2 py-1 rounded transition text-slate-400 hover:text-slate-200";
+        });
+
+        // Set Active button style
+        document.getElementById("bg-opt-" + type).className =
+          "px-2 py-1 rounded transition bg-slate-800 text-white font-medium";
+
+        // Toggle Layer visibility via CSS Opacity
+        lPhoto.classList.add("opacity-0");
+        lGrid.classList.add("opacity-0");
+        lText.classList.add("opacity-0");
+
+        document.getElementById("layer-" + type).classList.remove("opacity-0");
+      }
+
+      function updateUI() {
+        // Read state values
+        const L = state.L;
+        const C = state.C;
+        const H = state.H;
+        const A = state.A;
+
+        // Update numerical inputs to stay synced
+        document.getElementById("num-l").value = L;
+        document.getElementById("num-c").value = C;
+        document.getElementById("num-h").value = Math.round(H);
+        document.getElementById("num-a").value = A;
+
+        // Update slider inputs to stay synced
+        document
+          .querySelectorAll('input[type="range"]#input-l')
+          .forEach((el) => (el.value = L));
+        document
+          .querySelectorAll('input[type="range"]#input-c')
+          .forEach((el) => (el.value = C));
+        document
+          .querySelectorAll('input[type="range"]#input-h')
+          .forEach((el) => (el.value = H));
+        document
+          .querySelectorAll('input[type="range"]#input-a')
+          .forEach((el) => (el.value = A));
+
+        // Update visual wheel pointer position
+        updateHueWheelHandle(H);
+
+        // Generate CSS Strings
+        const oklchFullString =
+          "oklch(" +
+          L.toFixed(1) +
+          "% " +
+          C.toFixed(3) +
+          " " +
+          H.toFixed(1) +
+          " / " +
+          (A / 100).toFixed(2) +
+          ")";
+        const oklchOpaqueString =
+          "oklch(" +
+          L.toFixed(1) +
+          "% " +
+          C.toFixed(3) +
+          " " +
+          H.toFixed(1) +
+          ")";
+
+        // Display in layout
+        document.getElementById("code-oklch").innerText = oklchFullString;
+
+        // Calculate exact Hex equivalent for standard fallback
+        const rgbOpaque = oklchToRgb(L / 100, C, H);
+        const hexOpaque = rgbToHex(rgbOpaque.r, rgbOpaque.g, rgbOpaque.b);
+        document.getElementById("code-hex").innerText = "HEX: " + hexOpaque;
+        document.getElementById("code-hex-val").innerText = hexOpaque;
+
+        // Update Slider Track Gradients dynamically so they are highly visual!
+        updateSliderTracks(L, C, H, A);
+
+        // Live swatch update
+        const swatch = document.getElementById("color-preview-circle");
+        swatch.style.backgroundColor = oklchFullString;
+
+        // Check if color is out of standard sRGB gamut (C > ~0.37 usually clips, but accurate math is needed)
+        const gamutWarning = document.getElementById("gamut-warning");
+        if (isOutOfSRGBGamut(L / 100, C, H)) {
+          gamutWarning.classList.remove("hidden");
+          gamutWarning.classList.add("flex");
+        } else {
+          gamutWarning.classList.add("hidden");
+          gamutWarning.classList.remove("flex");
+        }
+
+        // Update Descriptions
+        document.getElementById("hue-description").innerText = getHueName(H);
+        document.getElementById("chroma-description").innerText =
+          getChromaDescription(C);
+
+        // Apply style directly to simulated Glassmorphic Card Overlay
+        const glassCard = document.getElementById("overlay-glass-card");
+        glassCard.style.backgroundColor = oklchFullString;
+        glassCard.style.borderColor =
+          "oklch(" +
+          (L + (L > 50 ? -15 : 20)).toFixed(1) +
+          "% " +
+          (C * 0.5).toFixed(3) +
+          " " +
+          H.toFixed(1) +
+          " / 0.3)";
+
+        const glassAvatar = document.getElementById("glass-avatar");
+        glassAvatar.style.backgroundColor =
+          "oklch(" +
+          (L > 50 ? L - 30 : L + 30).toFixed(1) +
+          "% " +
+          C.toFixed(3) +
+          " " +
+          H.toFixed(1) +
+          ")";
+
+        // ALPHA BLENDING COMPUTATIONS
+        const alphaDec = A / 100;
+
+        // Blending with White (#FFF)
+        const blendLight = blendColors(rgbOpaque, alphaDec, BG_COLORS.light);
+        const hexBlendLight = rgbToHex(
+          blendLight.r,
+          blendLight.g,
+          blendLight.b,
+        );
+        document.getElementById("blend-light-swatch").style.backgroundColor =
+          hexBlendLight;
+        document.getElementById("blend-light-hex").innerText = hexBlendLight;
+
+        // Blending with Slate 900 / Dark background (#0F172A)
+        const blendDark = blendColors(rgbOpaque, alphaDec, BG_COLORS.dark);
+        const hexBlendDark = rgbToHex(blendDark.r, blendDark.g, blendDark.b);
+        document.getElementById("blend-dark-swatch").style.backgroundColor =
+          hexBlendDark;
+        document.getElementById("blend-dark-hex").innerText = hexBlendDark;
+
+        // CONTRAST CALCULATION (WCAG Standards)
+        // On Light Background Blend: Evaluate contrast against Black text (#000000)
+        const contrastLightBg = getContrastRatio(blendLight, {
+          r: 0,
+          g: 0,
+          b: 0,
+        });
+        const badgeLight = document.getElementById("contrast-light-black");
+        badgeLight.innerText =
+          contrastLightBg.toFixed(1) +
+          " : 1 (" +
+          getContrastLevel(contrastLightBg) +
+          ")";
+        updateContrastBadgeStyle(badgeLight, contrastLightBg);
+
+        // On Dark Background Blend: Evaluate contrast against White text (#FFFFFF)
+        const contrastDarkBg = getContrastRatio(blendDark, {
+          r: 255,
+          g: 255,
+          b: 255,
+        });
+        const badgeDark = document.getElementById("contrast-dark-white");
+        badgeDark.innerText =
+          contrastDarkBg.toFixed(1) +
+          " : 1 (" +
+          getContrastLevel(contrastDarkBg) +
+          ")";
+        updateContrastBadgeStyle(badgeDark, contrastDarkBg);
+
+        // CALCULATE HIGH CONTRAST SWATCH DATA FOR EXTENDED UI PALETTE
+        const onPrimaryL = L > 62 ? 12 : 98;
+        const onPrimaryC = L > 62 ? Math.min(C * 0.15, 0.02) : 0.01;
+        const rgbOnPrimary = oklchToRgb(onPrimaryL / 100, onPrimaryC, H);
+        const contrastOnPrimary = getContrastRatio(rgbOpaque, rgbOnPrimary);
+
+        const secondaryL = L;
+        const secondaryC = C * 0.9;
+        const secondaryH = (H + 180) % 360;
+        const onSecondaryL = secondaryL > 62 ? 12 : 98;
+        const onSecondaryC =
+          secondaryL > 62 ? Math.min(secondaryC * 0.15, 0.02) : 0.01;
+        const rgbSecondary = oklchToRgb(
+          secondaryL / 100,
+          secondaryC,
+          secondaryH,
+        );
+        const rgbOnSecondary = oklchToRgb(
+          onSecondaryL / 100,
+          onSecondaryC,
+          secondaryH,
+        );
+        const contrastOnSecondary = getContrastRatio(
+          rgbSecondary,
+          rgbOnSecondary,
+        );
+
+        const bgLightL = 98;
+        const bgLightC = Math.min(C * 0.05, 0.01);
+        const textLightL = 12;
+        const textLightC = Math.min(C * 0.1, 0.02);
+        const borderLightL = 90;
+        const borderLightC = Math.min(C * 0.08, 0.015);
+        const rgbBgLight = oklchToRgb(bgLightL / 100, bgLightC, H);
+        const rgbTextLight = oklchToRgb(textLightL / 100, textLightC, H);
+        const contrastBgLight = getContrastRatio(rgbBgLight, rgbTextLight);
+
+        const bgDarkL = 10;
+        const bgDarkC = Math.min(C * 0.08, 0.025);
+        const textDarkL = 95;
+        const textDarkC = Math.min(C * 0.04, 0.01);
+        const borderDarkL = 22;
+        const borderDarkC = Math.min(C * 0.08, 0.02);
+        const rgbBgDark = oklchToRgb(bgDarkL / 100, bgDarkC, H);
+        const rgbTextDark = oklchToRgb(textDarkL / 100, textDarkC, H);
+        const contrastBgDark = getContrastRatio(rgbBgDark, rgbTextDark);
+
+        // Update Contrast Swatches Display Panel
+        const boxPrimary = document.getElementById("contrast-box-primary");
+        boxPrimary.style.backgroundColor =
+          "oklch(" +
+          L.toFixed(1) +
+          "% " +
+          C.toFixed(4) +
+          " " +
+          H.toFixed(1) +
+          ")";
+        boxPrimary.style.color =
+          "oklch(" +
+          onPrimaryL.toFixed(1) +
+          "% " +
+          onPrimaryC.toFixed(4) +
+          " " +
+          H.toFixed(1) +
+          ")";
+        boxPrimary.style.borderColor =
+          "oklch(" +
+          (L > 62 ? L - 15 : L + 15).toFixed(1) +
+          "% " +
+          C.toFixed(4) +
+          " " +
+          H.toFixed(1) +
+          ")";
+        document.getElementById("contrast-ratio-primary").innerText =
+          contrastOnPrimary.toFixed(1) +
+          " : 1 (" +
+          getContrastLevel(contrastOnPrimary) +
+          ")";
+
+        const boxSecondary = document.getElementById("contrast-box-secondary");
+        boxSecondary.style.backgroundColor =
+          "oklch(" +
+          secondaryL.toFixed(1) +
+          "% " +
+          secondaryC.toFixed(4) +
+          " " +
+          secondaryH.toFixed(1) +
+          ")";
+        boxSecondary.style.color =
+          "oklch(" +
+          onSecondaryL.toFixed(1) +
+          "% " +
+          onSecondaryC.toFixed(4) +
+          " " +
+          secondaryH.toFixed(1) +
+          ")";
+        boxSecondary.style.borderColor =
+          "oklch(" +
+          (secondaryL > 62 ? secondaryL - 15 : secondaryL + 15).toFixed(1) +
+          "% " +
+          secondaryC.toFixed(4) +
+          " " +
+          secondaryH.toFixed(1) +
+          ")";
+        document.getElementById("contrast-ratio-secondary").innerText =
+          contrastOnSecondary.toFixed(1) +
+          " : 1 (" +
+          getContrastLevel(contrastOnSecondary) +
+          ")";
+
+        const boxBgLight = document.getElementById(
+          "contrast-box-primary-bg-light",
+        );
+        boxBgLight.style.backgroundColor =
+          "oklch(" +
+          bgLightL.toFixed(1) +
+          "% " +
+          bgLightC.toFixed(4) +
+          " " +
+          H.toFixed(1) +
+          ")";
+        boxBgLight.style.color =
+          "oklch(" +
+          textLightL.toFixed(1) +
+          "% " +
+          textLightC.toFixed(4) +
+          " " +
+          H.toFixed(1) +
+          ")";
+        boxBgLight.style.borderColor =
+          "oklch(" +
+          borderLightL.toFixed(1) +
+          "% " +
+          borderLightC.toFixed(4) +
+          " " +
+          H.toFixed(1) +
+          ")";
+        document.getElementById("contrast-ratio-primary-bg-light").innerText =
+          contrastBgLight.toFixed(1) +
+          " : 1 (" +
+          getContrastLevel(contrastBgLight) +
+          ")";
+
+        const boxBgDark = document.getElementById(
+          "contrast-box-primary-bg-dark",
+        );
+        boxBgDark.style.backgroundColor =
+          "oklch(" +
+          bgDarkL.toFixed(1) +
+          "% " +
+          bgDarkC.toFixed(4) +
+          " " +
+          H.toFixed(1) +
+          ")";
+        boxBgDark.style.color =
+          "oklch(" +
+          textDarkL.toFixed(1) +
+          "% " +
+          textDarkC.toFixed(4) +
+          " " +
+          H.toFixed(1) +
+          ")";
+        boxBgDark.style.borderColor =
+          "oklch(" +
+          borderDarkL.toFixed(1) +
+          "% " +
+          borderDarkC.toFixed(4) +
+          " " +
+          H.toFixed(1) +
+          ")";
+        document.getElementById("contrast-ratio-primary-bg-dark").innerText =
+          contrastBgDark.toFixed(1) +
+          " : 1 (" +
+          getContrastLevel(contrastBgDark) +
+          ")";
+
+        // Run the CSS Theme Variables Generator
+        generateCSSTheme();
+      }
+
+      // Translate the Hue value to Cartesian coordinates for the wheel selector handle
+      function updateHueWheelHandle(H) {
+        const radius = 58; // Distance from center of 160x160 wheel
+
+        // 0 degrees starts at 3 o'clock (pointing right) and rotates clockwise.
+        const radians = (H * Math.PI) / 180;
+        const x = Math.cos(radians) * radius;
+        const y = Math.sin(radians) * radius;
+
+        const handle = document.getElementById("hue-wheel-handle");
+        handle.style.transform =
+          "translate(" + x.toFixed(1) + "px, " + y.toFixed(1) + "px)";
+
+        // Update text at center of wheel
+        document.getElementById("wheel-center-text").innerText =
+          Math.round(H) + "°";
+      }
+
+      // Apply dynamic gradient backgrounds to standard sliders so the user is guided visually
+      function updateSliderTracks(L, C, H, A) {
+        // Lightness Track: Gradient from pure black (0% L) to pure white (100% L) with current C & H
+        const trackL = document.getElementById("input-l");
+        trackL.style.background =
+          "linear-gradient(to right, oklch(0% " +
+          C +
+          " " +
+          H +
+          "), oklch(50% " +
+          C +
+          " " +
+          H +
+          "), oklch(100% " +
+          C +
+          " " +
+          H +
+          "))";
+
+        // Chroma Track: From 0 (grayish) to 0.4 Chroma with current L & H
+        const trackC = document.getElementById("input-c");
+        trackC.style.background =
+          "linear-gradient(to right, oklch(" +
+          L +
+          "% 0 " +
+          H +
+          "), oklch(" +
+          L +
+          "% 0.4 " +
+          H +
+          "))";
+
+        // Hue Linear Track: Smooth rainbow representing the 360-degree color wheel
+        const trackH = document.getElementById("input-h");
+        trackH.style.background =
+          "linear-gradient(to right, oklch(" +
+          L +
+          "% " +
+          C +
+          " 0), oklch(" +
+          L +
+          "% " +
+          C +
+          " 60), oklch(" +
+          L +
+          "% " +
+          C +
+          " 120), oklch(" +
+          L +
+          "% " +
+          C +
+          " 180), oklch(" +
+          L +
+          "% " +
+          C +
+          " 240), oklch(" +
+          L +
+          "% " +
+          C +
+          " 300), oklch(" +
+          L +
+          "% " +
+          C +
+          " 360))";
+
+        // Alpha Track: Transparent state to fully opaque state
+        const trackA = document.getElementById("input-a");
+        trackA.style.background =
+          "linear-gradient(to right, oklch(" +
+          L +
+          "% " +
+          C +
+          " " +
+          H +
+          " / 0), oklch(" +
+          L +
+          "% " +
+          C +
+          " " +
+          H +
+          " / 1))";
+
+        // conic-gradient background on Circular Hue Wheel
+        const wheelGradient = document.getElementById("hue-wheel-gradient");
+        wheelGradient.style.background =
+          "conic-gradient(from 90deg, oklch(" +
+          L +
+          "% " +
+          C +
+          " 0), oklch(" +
+          L +
+          "% " +
+          C +
+          " 60), oklch(" +
+          L +
+          "% " +
+          C +
+          " 120), oklch(" +
+          L +
+          "% " +
+          C +
+          " 180), oklch(" +
+          L +
+          "% " +
+          C +
+          " 240), oklch(" +
+          L +
+          "% " +
+          C +
+          " 300), oklch(" +
+          L +
+          "% " +
+          C +
+          " 360))";
+      }
+
+      // Core engine for generating CSS Theme Variables and Syncing UI Simulator
+      function generateCSSTheme() {
+        const prefix = state.genPrefix || "primary";
+        const format = state.genFormat;
+        const source = state.genSource;
+        const dict = TRANSLATIONS[state.lang];
+
+        const codeBlock = document.getElementById("generated-css-code");
+        const swatchStrip = document.getElementById("generated-swatches-strip");
+        const previewTitle = document.getElementById("swatch-preview-title");
+
+        swatchStrip.innerHTML = "";
+
+        // Build heavily annotated top banner comment block in target language
+        let cssOutput =
+          "/* \n" +
+          "  ==========================================================================\n" +
+          (state.lang === "vi"
+            ? "  BẢNG MÃ CSS VARIABLES - ĐƯỢC THIẾT KẾ BỞI OKLCH COLOR LAB\n"
+            : "  CSS VARIABLES THEME SHEET - DESIGNED BY OKLCH COLOR LAB\n") +
+          (state.lang === "vi" ? "  Định dạng xuất: " : "  Export Format: ") +
+          format.toUpperCase() +
+          "\n" +
+          (state.lang === "vi"
+            ? "  Phương thức phát sinh: "
+            : "  Generation Method: ") +
+          (source === "shades"
+            ? state.lang === "vi"
+              ? "11 Sắc độ Base"
+              : "11 Base Shades"
+            : source === "full"
+              ? state.lang === "vi"
+                ? "Bảng màu UI đầy đủ (Hệ thống thiết kế)"
+                : "Full UI design tokens"
+              : state.lang === "vi"
+                ? "Bộ sưu tập đã lưu cá nhân"
+                : "Saved local palette") +
+          "\n" +
+          (state.lang === "vi"
+            ? "  Tiền tố tùy biến: --color-"
+            : "  Custom Prefix: --color-") +
+          prefix +
+          "\n" +
+          (state.lang === "vi"
+            ? "  Đồng bộ hóa tiêu chuẩn thiết kế tiếp cận WCAG (Độ tương phản cao)\n"
+            : "  Synchronized with WCAG high-contrast accessibility standards\n") +
+          "  ==========================================================================\n" +
+          "*/\n\n:root {\n";
+
+        // Pre-calculate full UI system tokens
+        const primaryL = state.L;
+        const primaryC = state.C;
+        const primaryH = state.H;
+
+        const primaryHoverL = Math.max(primaryL - 8, 5);
+        const primaryActiveL = Math.max(primaryL - 15, 3);
+        const primaryBgL = primaryL > 50 ? 96 : 14;
+
+        const secondaryL = primaryL;
+        const secondaryC = primaryC * 0.9;
+        const secondaryH = (primaryH + 180) % 360;
+        const secondaryBgL = primaryL > 50 ? 96 : 14;
+
+        // Highly accessible color calculation rules
+        const onPrimaryL = primaryL > 62 ? 12 : 98;
+        const onPrimaryC =
+          primaryL > 62 ? Math.min(primaryC * 0.15, 0.02) : 0.01;
+
+        const onSecondaryL = secondaryL > 62 ? 12 : 98;
+        const onSecondaryC =
+          secondaryL > 62 ? Math.min(secondaryC * 0.15, 0.02) : 0.01;
+
+        const bgLightL = 98;
+        const bgLightC = Math.min(primaryC * 0.05, 0.01);
+        const surfaceLightL = 100;
+        const surfaceLightC = 0;
+        const textLightL = 12;
+        const textLightC = Math.min(primaryC * 0.1, 0.02);
+        const textMutedLightL = 45;
+        const textMutedLightC = Math.min(primaryC * 0.08, 0.02);
+        const borderLightL = 90;
+        const borderLightC = Math.min(primaryC * 0.08, 0.015);
+
+        const bgDarkL = 10;
+        const bgDarkC = Math.min(primaryC * 0.08, 0.025);
+        const surfaceDarkL = 16;
+        const surfaceDarkC = Math.min(primaryC * 0.08, 0.025);
+        const textDarkL = 95;
+        const textDarkC = Math.min(primaryC * 0.04, 0.01);
+        const textMutedDarkL = 65;
+        const textMutedDarkC = Math.min(primaryC * 0.04, 0.01);
+        const borderDarkL = 22;
+        const borderDarkC = Math.min(primaryC * 0.08, 0.02);
+
+        const successL = 72;
+        const successC = 0.15;
+        const successH = 145;
+
+        const warningL = 82;
+        const warningC = 0.16;
+        const warningH = 85;
+
+        const dangerL = 62;
+        const dangerC = 0.2;
+        const dangerH = 25;
+
+        // Direct Sync variables to Simulated Viewports via Wrapper CSS Variables (NO TEMPLATE LITERALS)
+        const wrapper = document.getElementById("ui-simulator-wrapper");
+        if (wrapper) {
+          wrapper.style.setProperty(
+            "--color-primary",
+            "oklch(" +
+              primaryL.toFixed(1) +
+              "% " +
+              primaryC.toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-on-primary",
+            "oklch(" +
+              onPrimaryL.toFixed(1) +
+              "% " +
+              onPrimaryC.toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-primary-hover",
+            "oklch(" +
+              primaryHoverL.toFixed(1) +
+              "% " +
+              primaryC.toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-primary-bg",
+            "oklch(" +
+              primaryBgL.toFixed(1) +
+              "% " +
+              (primaryC * 0.25).toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+
+          wrapper.style.setProperty(
+            "--color-secondary",
+            "oklch(" +
+              secondaryL.toFixed(1) +
+              "% " +
+              secondaryC.toFixed(4) +
+              " " +
+              secondaryH.toFixed(1) +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-secondary-bg",
+            "oklch(" +
+              secondaryBgL.toFixed(1) +
+              "% " +
+              (secondaryC * 0.2).toFixed(4) +
+              " " +
+              secondaryH.toFixed(1) +
+              ")",
+          );
+
+          wrapper.style.setProperty(
+            "--color-bg-light",
+            "oklch(" +
+              bgLightL.toFixed(1) +
+              "% " +
+              bgLightC.toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-surface-light",
+            "oklch(" +
+              surfaceLightL.toFixed(1) +
+              "% " +
+              surfaceLightC.toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-text-light",
+            "oklch(" +
+              textLightL.toFixed(1) +
+              "% " +
+              textLightC.toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-text-muted-light",
+            "oklch(" +
+              textMutedLightL.toFixed(1) +
+              "% " +
+              textMutedLightC.toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-border-light",
+            "oklch(" +
+              borderLightL.toFixed(1) +
+              "% " +
+              borderLightC.toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+
+          wrapper.style.setProperty(
+            "--color-bg-dark",
+            "oklch(" +
+              bgDarkL.toFixed(1) +
+              "% " +
+              bgDarkC.toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-surface-dark",
+            "oklch(" +
+              surfaceDarkL.toFixed(1) +
+              "% " +
+              surfaceDarkC.toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-text-dark",
+            "oklch(" +
+              textDarkL.toFixed(1) +
+              "% " +
+              textDarkC.toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-text-muted-dark",
+            "oklch(" +
+              textMutedDarkL.toFixed(1) +
+              "% " +
+              textMutedDarkC.toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-border-dark",
+            "oklch(" +
+              borderDarkL.toFixed(1) +
+              "% " +
+              borderDarkC.toFixed(4) +
+              " " +
+              primaryH.toFixed(1) +
+              ")",
+          );
+
+          wrapper.style.setProperty(
+            "--color-success",
+            "oklch(" +
+              successL.toFixed(1) +
+              "% " +
+              successC.toFixed(4) +
+              " " +
+              successH +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-warning",
+            "oklch(" +
+              warningL.toFixed(1) +
+              "% " +
+              warningC.toFixed(4) +
+              " " +
+              warningH +
+              ")",
+          );
+          wrapper.style.setProperty(
+            "--color-danger",
+            "oklch(" +
+              dangerL.toFixed(1) +
+              "% " +
+              dangerC.toFixed(4) +
+              " " +
+              dangerH +
+              ")",
+          );
+        }
+
+        // Export tab logic switcher
+        if (source === "shades") {
+          previewTitle.innerText =
+            dict.previewShades +
+            prefix +
+            "-50 đến --color-" +
+            prefix +
+            "-950):";
+
+          // Standard Tailwind-like Shade Stops
+          const shadeStops = [
+            { level: 50, l: 97, cMult: 0.18 },
+            { level: 100, l: 92, cMult: 0.38 },
+            { level: 200, l: 85, cMult: 0.68 },
+            { level: 300, l: 75, cMult: 0.88 },
+            { level: 400, l: 65, cMult: 0.96 },
+            { level: 500, l: state.L, cMult: 1 }, // Base active color is shade 500
+            { level: 600, l: state.L * 0.86, cMult: 1 },
+            { level: 700, l: state.L * 0.73, cMult: 0.98 },
+            { level: 800, l: state.L * 0.58, cMult: 0.94 },
+            { level: 900, l: state.L * 0.42, cMult: 0.88 },
+            { level: 950, l: state.L * 0.26, cMult: 0.72 },
+          ];
+
+          shadeStops.forEach((stop) => {
+            const targetL = Math.max(3, Math.min(99, stop.l));
+            const targetC = Math.max(0, Math.min(0.4, state.C * stop.cMult));
+
+            const oklchStr =
+              "oklch(" +
+              targetL.toFixed(1) +
+              "% " +
+              targetC.toFixed(4) +
+              " " +
+              state.H.toFixed(1) +
+              ")";
+
+            let colorVal = oklchStr;
+            if (format === "hex") {
+              const rgb = oklchToRgb(targetL / 100, targetC, state.H);
+              colorVal = rgbToHex(rgb.r, rgb.g, rgb.b);
+            }
+
+            cssOutput +=
+              "  --color-" +
+              prefix +
+              "-" +
+              stop.level +
+              ": " +
+              colorVal +
+              ";\n";
+
+            // Render preview swatch
+            const swatch = document.createElement("div");
+            swatch.className =
+              "flex-1 h-full cursor-pointer transition transform hover:scale-y-110 relative group";
+            swatch.style.backgroundColor = oklchStr;
+            swatch.title =
+              "--color-" + prefix + "-" + stop.level + ": " + colorVal;
+
+            swatch.addEventListener("click", () => {
+              state.L = targetL;
+              state.C = targetC;
+              updateUI();
+              showToast(dict.toastShadeLoad);
+            });
+
+            swatchStrip.appendChild(swatch);
+          });
+        } else if (source === "full") {
+          previewTitle.innerText = dict.previewFull;
+
+          // Programmatically derive standard UI design tokens including contrast variables
+          const tokens = [
+            // BRAND SYSTEM
+            {
+              name: prefix,
+              desc: "Màu thương hiệu chính (Primary Color)",
+              l: primaryL,
+              c: primaryC,
+              h: primaryH,
+            },
+            {
+              name: "on-" + prefix,
+              desc: "Màu chữ tương phản tối ưu trên màu thương hiệu chính",
+              l: onPrimaryL,
+              c: onPrimaryC,
+              h: primaryH,
+            },
+            {
+              name: prefix + "-hover",
+              desc: "Màu hover thương hiệu chính (tối hơn)",
+              l: primaryHoverL,
+              c: primaryC,
+              h: primaryH,
+            },
+            {
+              name: prefix + "-active",
+              desc: "Màu active thương hiệu chính (tối hơn nữa)",
+              l: primaryActiveL,
+              c: primaryC,
+              h: primaryH,
+            },
+            {
+              name: prefix + "-bg",
+              desc: "Màu nền thương hiệu nhạt (Light background)",
+              l: primaryBgL,
+              c: primaryC * 0.25,
+              h: primaryH,
+            },
+
+            // SECONDARY SYSTEM (Complementary Accent Color)
+            {
+              name: "secondary",
+              desc: "Màu phụ bổ túc (xoay Hue đối xứng 180°)",
+              l: secondaryL,
+              c: secondaryC,
+              h: secondaryH,
+            },
+            {
+              name: "on-secondary",
+              desc: "Màu chữ tương phản tối ưu trên màu phụ",
+              l: onSecondaryL,
+              c: onSecondaryC,
+              h: secondaryH,
+            },
+            {
+              name: "secondary-bg",
+              desc: "Màu nền phụ nhạt",
+              l: secondaryBgL,
+              c: secondaryC * 0.2,
+              h: secondaryH,
+            },
+
+            // NEUTRALS LIGHT (Light Mode Layout)
+            {
+              name: "bg-light",
+              desc: "Màu nền trang Sáng",
+              l: bgLightL,
+              c: bgLightC,
+              h: primaryH,
+            },
+            {
+              name: "surface-light",
+              desc: "Màu nền Card/Hộp Sáng",
+              l: surfaceLightL,
+              c: surfaceLightC,
+              h: primaryH,
+            },
+            {
+              name: "text-light",
+              desc: "Màu chữ chính trên nền Sáng",
+              l: textLightL,
+              c: textLightC,
+              h: primaryH,
+            },
+            {
+              name: "text-muted-light",
+              desc: "Màu chữ phụ (Muted) trên nền Sáng",
+              l: textMutedLightL,
+              c: textMutedLightC,
+              h: primaryH,
+            },
+            {
+              name: "border-light",
+              desc: "Màu đường viền trên nền Sáng",
+              l: borderLightL,
+              c: borderLightC,
+              h: primaryH,
+            },
+
+            // NEUTRALS DARK (Dark Mode Layout)
+            {
+              name: "bg-dark",
+              desc: "Màu nền trang Tối",
+              l: bgDarkL,
+              c: bgDarkC,
+              h: primaryH,
+            },
+            {
+              name: "surface-dark",
+              desc: "Màu nền Card/Hộp Tối",
+              l: surfaceDarkL,
+              c: surfaceDarkC,
+              h: primaryH,
+            },
+            {
+              name: "text-dark",
+              desc: "Màu chữ chính trên nền Tối",
+              l: textDarkL,
+              c: textDarkC,
+              h: primaryH,
+            },
+            {
+              name: "text-muted-dark",
+              desc: "Màu chữ phụ (Muted) trên nền Tối",
+              l: textMutedDarkL,
+              c: textMutedDarkC,
+              h: primaryH,
+            },
+            {
+              name: "border-dark",
+              desc: "Màu đường viền trên nền Tối",
+              l: borderDarkL,
+              c: borderDarkC,
+              h: primaryH,
+            },
+
+            // SEMANTICS (Cân bằng sinh học)
+            {
+              name: "success",
+              desc: "Trạng thái Thành công (Lá)",
+              l: successL,
+              c: successC,
+              h: successH,
+            },
+            {
+              name: "warning",
+              desc: "Trạng thái Cảnh báo (Vàng)",
+              l: warningL,
+              c: warningC,
+              h: warningH,
+            },
+            {
+              name: "danger",
+              desc: "Trạng thái Nguy hiểm/Lỗi (Đỏ)",
+              l: dangerL,
+              c: dangerC,
+              h: dangerH,
+            },
+          ];
+
+          cssOutput +=
+            "  /* === HỆ THỐNG MÀU THƯƠNG HIỆU (PRIMARY SYSTEM) === */\n";
+
+          tokens.forEach((tk, idx) => {
+            if (idx === 5)
+              cssOutput +=
+                "\n  /* === MÀU PHỤ BỔ TÚC (SECONDARY SYSTEM) === */\n";
+            if (idx === 8)
+              cssOutput +=
+                "\n  /* === NEUTRAL SYSTEM (GIAO DIỆN SÁNG - LIGHT THEME) === */\n";
+            if (idx === 13)
+              cssOutput +=
+                "\n  /* === NEUTRAL SYSTEM (GIAO DIỆN TỐI - DARK THEME) === */\n";
+            if (idx === 18)
+              cssOutput +=
+                "\n  /* === MÀU TRẠNG THÁI / SEMANTIC SYSTEM === */\n";
+
+            const oklchStr =
+              "oklch(" +
+              tk.l.toFixed(1) +
+              "% " +
+              tk.c.toFixed(4) +
+              " " +
+              tk.h.toFixed(1) +
+              ")";
+            let colorVal = oklchStr;
+            if (format === "hex") {
+              const rgb = oklchToRgb(tk.l / 100, tk.c, tk.h);
+              colorVal = rgbToHex(rgb.r, rgb.g, rgb.b);
+            }
+
+            cssOutput +=
+              "  --color-" +
+              tk.name +
+              ": " +
+              colorVal +
+              "; /* " +
+              tk.desc +
+              " */\n";
+
+            // Select 8 main representative colors to populate swatch strip indicator
+            const mainRepr = [
+              prefix,
+              "secondary",
+              "bg-light",
+              "text-light",
+              "bg-dark",
+              "text-dark",
+              "success",
+              "danger",
+            ];
+            if (mainRepr.includes(tk.name)) {
+              const swatch = document.createElement("div");
+              swatch.className =
+                "flex-1 h-full cursor-pointer transition transform hover:scale-y-110 relative group border-r border-slate-950 last:border-0";
+              swatch.style.backgroundColor = oklchStr;
+              swatch.title =
+                "--color-" + tk.name + ": " + colorVal + " (" + tk.desc + ")";
+
+              // Add overlay label
+              const label = document.createElement("span");
+              label.className =
+                "absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white mix-blend-difference select-none pointer-events-none opacity-40 group-hover:opacity-100 uppercase";
+              label.innerText = tk.name.substring(0, 3);
+              swatch.appendChild(label);
+
+              // Load clicked derived color into main playground state
+              swatch.addEventListener("click", () => {
+                state.L = tk.l;
+                state.C = tk.c;
+                state.H = tk.h;
+                updateUI();
+                showToast(dict.toastTokenLoad);
+              });
+
+              swatchStrip.appendChild(swatch);
+            }
+          });
+        } else {
+          // EXPORT FROM CUSTOM USER SAVED PALETTE
+          previewTitle.innerText = dict.previewSaved;
+
+          if (state.savedColors.length === 0) {
+            cssOutput +=
+              "  /* " +
+              (state.lang === "vi"
+                ? "Bạn chưa lưu màu nào vào bộ sưu tập cá nhân."
+                : "No saved colors in database.") +
+              " */\n";
+            swatchStrip.innerHTML =
+              '<div class="w-full h-full flex items-center justify-center bg-slate-950 text-[11px] text-slate-500 italic">' +
+              dict.paletteEmpty +
+              "</div>";
+          } else {
+            state.savedColors.forEach((item, index) => {
+              const stopNum = index + 1;
+              const alphaDec = item.a / 100;
+              const oklchStr =
+                "oklch(" +
+                item.l.toFixed(1) +
+                "% " +
+                item.c.toFixed(3) +
+                " " +
+                item.h.toFixed(1) +
+                " / " +
+                alphaDec.toFixed(2) +
+                ")";
+
+              let colorVal = oklchStr;
+              if (format === "hex") {
+                const rgbOpaque = oklchToRgb(item.l / 100, item.c, item.h);
+                if (item.a < 100) {
+                  const alphaHex = Math.round(alphaDec * 255)
+                    .toString(16)
+                    .padStart(2, "0")
+                    .toUpperCase();
+                  colorVal =
+                    rgbToHex(rgbOpaque.r, rgbOpaque.g, rgbOpaque.b) + alphaHex;
+                } else {
+                  colorVal = rgbToHex(rgbOpaque.r, rgbOpaque.g, rgbOpaque.b);
+                }
+              }
+
+              cssOutput +=
+                "  --color-" +
+                prefix +
+                "-saved-" +
+                stopNum +
+                ": " +
+                colorVal +
+                ";\n";
+
+              // Render preview swatch
+              const swatch = document.createElement("div");
+              swatch.className =
+                "flex-1 h-full cursor-pointer transition transform hover:scale-y-110 relative overflow-hidden";
+              swatch.title =
+                "--color-" + prefix + "-saved-" + stopNum + ": " + colorVal;
+
+              swatch.innerHTML =
+                '<div class="absolute inset-0 checkerboard-bg -z-10 opacity-30"></div><div class="w-full h-full" style="background-color: ' +
+                oklchStr +
+                '"></div>';
+
+              swatch.addEventListener("click", () => {
+                state.L = item.l;
+                state.C = item.c;
+                state.H = item.h;
+                state.A = item.a;
+                updateUI();
+                showToast(dict.toastTokenLoad);
+              });
+
+              swatchStrip.appendChild(swatch);
+            });
+          }
+        }
+
+        cssOutput += "}";
+        codeBlock.innerText = cssOutput;
+      }
+
+      // Trigger dynamic CSS File Blob Generation & Download
+      function downloadCSSFile() {
+        const prefix = state.genPrefix || "primary";
+        const format = state.genFormat;
+        const source = state.genSource;
+        const cssCode = document.getElementById("generated-css-code").innerText;
+
+        // Generate Blob binary structure safely
+        const blob = new Blob([cssCode], { type: "text/css;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+
+        // Create a temporary link element and click it
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute(
+          "download",
+          "oklch-theme-" + prefix + "-" + source + "-" + format + ".css",
+        );
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast(TRANSLATIONS[state.lang].toastDownloadSuccess);
+      }
+
+      // NEW MATHEMATICAL CONVERSIONS: HEX / RGB to OKLCH
+
+      // Non-linear sRGB to linear sRGB
+      function srgbToLinear(c) {
+        return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+      }
+
+      // Complete standard sRGB to OKLCH color transform
+      function rgbToOklch(r255, g255, b255) {
+        let r = srgbToLinear(r255 / 255);
+        let g = srgbToLinear(g255 / 255);
+        let b = srgbToLinear(b255 / 255);
+
+        // sRGB Linear to LMS Cone space
+        let l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b;
+        let m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b;
+        let s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b;
+
+        // Cube root representing non-linear response
+        let l_ = Math.cbrt(l);
+        let m_ = Math.cbrt(m);
+        let s_ = Math.cbrt(s);
+
+        // LMS' to OKLAB (Lightness, a_coord, b_coord)
+        let L = 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_;
+        let a = 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_;
+        let b_coord = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_;
+
+        // OKLAB coordinates to OKLCH coordinates (Polar Cylindrical)
+        let C = Math.sqrt(a * a + b_coord * b_coord);
+        let hRad = Math.atan2(b_coord, a);
+        let H = (hRad * 180) / Math.PI;
+        if (H < 0) H += 360;
+
+        // Clamp results safely to active model bounds
+        return {
+          l: Math.max(0, Math.min(100, L * 100)),
+          c: Math.max(0, Math.min(0.4, C)),
+          h: Math.max(0, Math.min(360, H)),
+        };
+      }
+
+      // Clean Hex Code String parser
+      function hexToRgb(hex) {
+        hex = hex.replace(/^#/, "");
+
+        if (hex.length === 3) {
+          hex = hex
+            .split("")
+            .map((char) => char + char)
+            .join("");
+        }
+
+        if (hex.length !== 6) return null;
+
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+
+        if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
+
+        return { r, g, b };
+      }
+
+      // OKLCH -> OKLAB -> LMS -> Linear sRGB -> sRGB Math Conversion Engine
+      function oklchToRgb(l, c, h) {
+        // Hue from degrees to radians
+        const hRad = (h * Math.PI) / 180;
+        const a = c * Math.cos(hRad);
+        const b_coord = c * Math.sin(hRad); // Đổi tên từ b thành b_coord để tránh trùng lặp
+
+        // OKLAB to LMS cone response space
+        const l_ = l + 0.3963377774 * a + 0.2158037573 * b_coord;
+        const m_ = l - 0.1055613458 * a - 0.0638541728 * b_coord;
+        const s_ = l - 0.0894841775 * a - 1.2914855414 * b_coord;
+
+        // Raise to cubic power to restore linearity
+        const l_lin = Math.pow(Math.max(0, l_), 3);
+        const m_lin = Math.pow(Math.max(0, m_), 3);
+        const s_lin = Math.pow(Math.max(0, s_), 3);
+
+        // LMS to Linear RGB
+        let r_lin =
+          +4.0767416621 * l_lin - 3.3077115913 * m_lin + 0.2309699292 * s_lin;
+        let g_lin =
+          -1.2684380046 * l_lin + 2.6097574011 * m_lin - 0.3413193965 * s_lin;
+        let b_lin =
+          -0.0041960863 * l_lin - 0.7034186147 * m_lin + 1.707614701 * s_lin;
+
+        // Apply standard sRGB Gamma correction to convert from linear to non-linear
+        const toSrgb = (x) => {
+          return x <= 0.0031308
+            ? 12.92 * x
+            : 1.055 * Math.pow(x, 1 / 2.4) - 0.055;
+        };
+
+        // Clamp colors to correct bounds and scale to [0-255]
+        let r = Math.min(255, Math.max(0, Math.round(toSrgb(r_lin) * 255)));
+        let g = Math.min(255, Math.max(0, Math.round(toSrgb(g_lin) * 255)));
+        let b = Math.min(255, Math.max(0, Math.round(toSrgb(b_lin) * 255)));
+
+        return { r, g, b, r_lin, g_lin, b_lin };
+      }
+
+      // Basic out-of-gamut heuristic helper
+      function isOutOfSRGBGamut(l, c, h) {
+        // Convert to RGB, then check if linear values exceed standard bounds [0, 1]
+        const rgb = oklchToRgb(l, c, h);
+        return (
+          rgb.r_lin < 0 ||
+          rgb.r_lin > 1 ||
+          rgb.g_lin < 0 ||
+          rgb.g_lin > 1 ||
+          rgb.b_lin < 0 ||
+          rgb.b_lin > 1
+        );
+      }
+
+      // RGB channel conversion to hex string
+      function rgbToHex(r, g, b) {
+        const hex = (val) => {
+          const s = val.toString(16);
+          return s.length === 1 ? "0" + s : s;
+        };
+        return ("#" + hex(r) + hex(g) + hex(b)).toUpperCase();
+      }
+
+      // Mix translucent color with absolute backdrop (Alpha Blending Equation)
+      function blendColors(fg, alpha, bg) {
+        return {
+          r: Math.round(fg.r * alpha + bg.r * (1 - alpha)),
+          g: Math.round(fg.g * alpha + bg.g * (1 - alpha)),
+          b: Math.round(fg.b * alpha + bg.b * (1 - alpha)),
+        };
+      }
+
+      // Get relative luminance under WCAG specification
+      function getLuminance(rgb) {
+        const r = rgb.r / 255;
+        const g = rgb.g / 255;
+        const b = rgb.b / 255;
+
+        const R = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+        const G = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+        const B = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+
+        return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+      }
+
+      // Calculate contrast ratio between two relative luminance values
+      function getContrastRatio(rgb1, rgb2) {
+        const lum1 = getLuminance(rgb1);
+        const lum2 = getLuminance(rgb2);
+
+        const lighter = Math.max(lum1, lum2);
+        const darker = Math.min(lum1, lum2);
+
+        return (lighter + 0.05) / (darker + 0.05);
+      }
+
+      // Convert raw numeric contrast into classic WCAG ratings (AAA, AA, Fail)
+      function getContrastLevel(ratio) {
+        if (ratio >= 7) return "AAA (Xuất sắc)";
+        if (ratio >= 4.5) return "AA (Đạt chuẩn)";
+        if (ratio >= 3) return "Large Text (Yếu)";
+        return "Kém (FAIL)";
+      }
+
+      // Apply tailwind styling based on contrast strength
+      function updateContrastBadgeStyle(badge, ratio) {
+        badge.className = "text-xs font-semibold px-2 py-0.5 rounded";
+        if (ratio >= 4.5) {
+          badge.classList.add(
+            "bg-emerald-500/20",
+            "text-emerald-500",
+            "border",
+            "border-emerald-500/30",
+          );
+        } else if (ratio >= 3) {
+          badge.classList.add(
+            "bg-amber-500/20",
+            "text-amber-500",
+            "border",
+            "border-amber-500/30",
+          );
+        } else {
+          badge.classList.add(
+            "bg-rose-500/20",
+            "text-rose-500",
+            "border",
+            "border-rose-500/30",
+          );
+        }
+      }
+
+      // Friendly analytical name translation for angles (Hue)
+      function getHueName(h) {
+        const isVi = state.lang === "vi";
+        if (h >= 340 || h < 20)
+          return isVi ? "Tông Đỏ / Hồng Ấm 🌹" : "Warm Red / Pink 🌹";
+        if (h >= 20 && h < 50)
+          return isVi ? "Tông Cam Thần Thái 🍊" : "Energetic Orange 🍊";
+        if (h >= 50 && h < 85)
+          return isVi
+            ? "Tông Vàng Cát / Cam Đất 🍁"
+            : "Earthy Yellow / Gold 🍁";
+        if (h >= 85 && h < 110)
+          return isVi ? "Tông Vàng Chanh Nắng ☀️" : "Vibrant Sunny Yellow ☀️";
+        if (h >= 110 && h < 140)
+          return isVi ? "Tông Xanh Đọt Chuối 🍃" : "Lime Green 🍃";
+        if (h >= 140 && h < 175)
+          return isVi
+            ? "Tông Xanh Mint / Ngọc Bích 🌿"
+            : "Jade & Mint Green 🌿";
+        if (h >= 175 && h < 210)
+          return isVi ? "Tông Xanh Ngọc Biển 🌊" : "Teal & Cyan Waters 🌊";
+        if (h >= 210 && h < 240)
+          return isVi
+            ? "Tông Xanh Da Trời / Cyan 🧊"
+            : "Sky Blue / Ice Cyan 🧊";
+        if (h >= 240 && h < 285)
+          return isVi ? "Tông Xanh Dương Hoàng Gia 🌌" : "Deep Royal Blue 🌌";
+        if (h >= 285 && h < 315)
+          return isVi ? "Tông Tím Hoa Thạch Thảo 💜" : "Amethyst Purple 💜";
+        return isVi ? "Tông Hồng Cánh Sen rực rỡ 🌸" : "Vivid Lotus Pink 🌸";
+      }
+
+      // Quick verbal indicator for Chroma index
+      function getChromaDescription(c) {
+        const isVi = state.lang === "vi";
+        if (c < 0.02)
+          return isVi
+            ? "Màu xỉn tuyệt đối (Grayscale)"
+            : "Oversaturated Grayscale";
+        if (c < 0.08)
+          return isVi ? "Màu đục nhẹ (Muted/Pastel)" : "Elegant Muted Pastel";
+        if (c < 0.16)
+          return isVi
+            ? "Cân bằng nịnh mắt (Balanced UI)"
+            : "Balanced UI Friendly Color";
+        if (c < 0.28)
+          return isVi ? "Rất rực rỡ (Vibrant)" : "Extremely Vibrant Color";
+        return isVi
+          ? "Cực kỳ chói / Siêu bão hòa 🔥"
+          : "Ultra-Saturated Gamut Fire 🔥";
+      }
+
+      // Toast notifications logic (no alerts used)
+      function showToast(message) {
+        const container = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+        toast.className =
+          "bg-slate-900 border border-slate-700/80 text-slate-100 text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 pointer-events-auto transition duration-300 transform translate-y-4 opacity-0";
+        toast.innerHTML =
+          '<i data-lucide="info" class="w-4 h-4 text-indigo-400"></i><span class="font-medium">' +
+          message +
+          "</span>";
+
+        container.appendChild(toast);
+        lucide.createIcons();
+
+        // Trigger animation
+        setTimeout(function () {
+          toast.classList.remove("translate-y-4", "opacity-0");
+        }, 10);
+
+        // Auto dismiss toast
+        setTimeout(function () {
+          toast.classList.add("opacity-0", "translate-y-2");
+          setTimeout(function () {
+            toast.remove();
+          }, 300);
+        }, 2500);
+      }
+
+      // SESSION PALETTE MANAGEMENTS
+      function saveCurrentColorToPalette() {
+        const dict = TRANSLATIONS[state.lang];
+        const newColor = {
+          id: Date.now(),
+          l: state.L,
+          c: state.C,
+          h: state.H,
+          a: state.A,
+        };
+
+        // Limit palette shelf to 12 colors maximum to prevent clutter
+        if (state.savedColors.length >= 12) {
+          state.savedColors.shift();
+        }
+
+        state.savedColors.push(newColor);
+        savePaletteToStorage();
+        renderSavedPalette();
+        showToast(dict.toastSaveColor);
+
+        // Also refresh generated CSS theme if tab 'saved' is currently active
+        if (state.genSource === "saved") {
+          generateCSSTheme();
+        }
+      }
+
+      function savePaletteToStorage() {
+        localStorage.setItem(
+          "oklch_saved_colors",
+          JSON.stringify(state.savedColors),
+        );
+      }
+
+      function loadPaletteFromStorage() {
+        const raw = localStorage.getItem("oklch_saved_colors");
+        if (raw) {
+          try {
+            state.savedColors = JSON.parse(raw);
+            renderSavedPalette();
+          } catch (e) {
+            state.savedColors = [];
+          }
+        }
+      }
+
+      function renderSavedPalette() {
+        const container = document.getElementById("palette-swatches");
+        const emptyText = document.getElementById("palette-empty-text");
+        const dict = TRANSLATIONS[state.lang];
+
+        if (state.savedColors.length === 0) {
+          emptyText.style.display = "block";
+          emptyText.innerText = dict.paletteEmpty;
+          // Remove older dynamic swatches if any
+          const existingSwatches = container.querySelectorAll(
+            ".palette-swatch-chip",
+          );
+          existingSwatches.forEach(function (el) {
+            el.remove();
+          });
+          return;
+        }
+
+        emptyText.style.display = "none";
+
+        // Clear old dynamically generated chips
+        const existingSwatches = container.querySelectorAll(
+          ".palette-swatch-chip",
+        );
+        existingSwatches.forEach(function (el) {
+          el.remove();
+        });
+
+        // Build fresh chips
+        state.savedColors.forEach(function (item) {
+          const chip = document.createElement("div");
+          chip.className =
+            "palette-swatch-chip flex items-center gap-1.5 p-1 bg-slate-950 border border-slate-800 rounded-lg group hover:border-slate-700 transition";
+
+          const alphaDec = item.a / 100;
+          const oklchString =
+            "oklch(" +
+            item.l.toFixed(1) +
+            "% " +
+            item.c.toFixed(3) +
+            " " +
+            item.h.toFixed(1) +
+            " / " +
+            alphaDec.toFixed(2) +
+            ")";
+
+          chip.innerHTML =
+            '<button class="w-7 h-7 rounded-md border border-slate-800/80 relative overflow-hidden flex-shrink-0" title="Nhấn để nạp màu này" style="background-color: ' +
+            oklchString +
+            '"><div class="absolute inset-0 checkerboard-bg -z-10 opacity-30"></div></button><div class="text-[10px] pr-1.5"><span class="block font-mono text-slate-300 font-semibold">' +
+            item.l.toFixed(0) +
+            "% " +
+            item.c.toFixed(2) +
+            " " +
+            item.h.toFixed(0) +
+            '°</span><span class="block text-[8px] text-slate-500 font-mono">Alpha: ' +
+            item.a +
+            '%</span></div><button class="delete-swatch-btn hidden group-hover:flex p-1 hover:text-rose-400 text-slate-500 transition-colors" title="Xóa"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>';
+
+          // Handle Loading when clicking swatch
+          chip.querySelector("button").addEventListener("click", function () {
+            state.L = item.l;
+            state.C = item.c;
+            state.H = item.h;
+            state.A = item.a;
+            updateUI();
+            showToast(
+              "Restore: oklch(" +
+                item.l.toFixed(0) +
+                "% " +
+                item.c.toFixed(2) +
+                " " +
+                item.h.toFixed(0) +
+                "°)",
+            );
+          });
+
+          // Handle Delete Swatch
+          chip
+            .querySelector(".delete-swatch-btn")
+            .addEventListener("click", function (e) {
+              e.stopPropagation();
+              state.savedColors = state.savedColors.filter(function (c) {
+                return c.id !== item.id;
+              });
+              savePaletteToStorage();
+              renderSavedPalette();
+              showToast(dict.btnClearPalette);
+
+              // Keep CSS generator in sync if showing saved
+              if (state.genSource === "saved") {
+                generateCSSTheme();
+              }
+            });
+
+          container.appendChild(chip);
+        });
+
+        // Re-render lucide icons inside generated chips
+        lucide.createIcons();
+      }
+    </script>
+  </body>
+</html>
